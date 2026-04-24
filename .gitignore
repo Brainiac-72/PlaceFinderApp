@@ -36,6 +36,8 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+tsc_errors.log
+tsc_errors.txt
 
 app-example
 

@@ -1,1 +1,0 @@
-src/components/app-tabs.web.tsx(28,38): error TS2322: Type '"/explore"' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/_sitemap" | `/_sitemap?${string}` | `/_sitemap#${string}` | "/(auth)/login" | `/(auth)/login?${string}` | ... 45 more ... | undefined'.
