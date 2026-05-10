@@ -9,6 +9,7 @@ interface SettingsState {
   theme: ThemeMode;
   hasFinishedOnboarding: boolean;
   hasHydrated: boolean; // Tracking hydration status
+  setHasHydrated: (hydrated: boolean) => void;
   setTheme: (theme: ThemeMode) => void;
   setHasFinishedOnboarding: (finished: boolean) => void;
   getIsDark: () => boolean;
@@ -20,6 +21,7 @@ export const useSettingsStore = create<SettingsState>()(
       theme: 'light',
       hasFinishedOnboarding: false,
       hasHydrated: false,
+      setHasHydrated: (hasHydrated) => set({ hasHydrated }),
       setTheme: (theme) => set({ theme }),
       setHasFinishedOnboarding: (hasFinishedOnboarding) => set({ hasFinishedOnboarding }),
       getIsDark: () => {
@@ -34,7 +36,7 @@ export const useSettingsStore = create<SettingsState>()(
       name: 'sfa-settings',
       storage: createJSONStorage(() => AsyncStorage),
       onRehydrateStorage: () => (state) => {
-        if (state) state.hasHydrated = true;
+        if (state) state.setHasHydrated(true);
       },
     }
   )

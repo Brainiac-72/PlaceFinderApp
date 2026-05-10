@@ -101,3 +101,31 @@ CREATE POLICY "Images are publicly accessible."
 CREATE POLICY "Authenticated users can upload images."
   ON storage.objects FOR INSERT
   WITH CHECK ( bucket_id = 'properties' AND auth.role() = 'authenticated' );
+
+-- Notifications Table
+create table public.notifications (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references public.profiles(id) not null,
+  title text not null,
+  body text not null,
+  type text default 'info',
+  data jsonb default '{}',
+  is_read boolean default false,
+  created_at timestamp with time zone default now()
+);
+
+-- Enable RLS
+alter table public.notifications enable row level security;
+
+-- Policies
+create policy "Users can see their own notifications"
+  on public.notifications for select
+  using ( auth.uid() = user_id );
+
+create policy "Users can update their own notifications"
+  on public.notifications for update
+  using ( auth.uid() = user_id );
+
+create policy "Users can delete their own notifications"
+  on public.notifications for delete
+  using ( auth.uid() = user_id );

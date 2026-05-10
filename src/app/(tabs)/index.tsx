@@ -11,6 +11,7 @@ import { useAuth } from '../../providers/AuthProvider';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useQuery } from '@tanstack/react-query';
 import { propertyService } from '../../services/propertyService';
+import { notificationService } from '../../services/notificationService';
 import { combineWithDummyData } from '../../utils/propertyUtils';
 import { FlashList } from '@shopify/flash-list';
 
@@ -47,6 +48,14 @@ export default function HomeDashboard() {
     queryKey: ['my-properties', user?.id],
     queryFn: () => propertyService.getMyProperties(user!.id),
     enabled: !!user && profile?.role === 'owner',
+  });
+
+  // 3. Fetch Unread Notifications Count
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['notifications-count', user?.id],
+    queryFn: () => notificationService.getUnreadCount(user!.id),
+    enabled: !!user,
+    refetchInterval: 1000 * 60 * 2, // Refetch every 2 minutes
   });
 
   const loading = isLoadingAll || (profile?.role === 'owner' && isLoadingMy && myProperties.length === 0);
@@ -89,9 +98,16 @@ export default function HomeDashboard() {
             )}
           </View>
         </View>
-        <TouchableOpacity style={[styles.notificationBtn, { backgroundColor: colors.card, shadowColor: isDark ? '#fff' : '#000' }]}>
+        <TouchableOpacity 
+          style={[styles.notificationBtn, { backgroundColor: colors.card, shadowColor: isDark ? '#fff' : '#000' }]}
+          onPress={() => router.push('/notifications')}
+        >
           <Ionicons name="notifications-outline" size={22} color={colors.text} />
-          <View style={[styles.notificationDot, { backgroundColor: colors.error }]} />
+          {unreadCount > 0 && (
+            <View style={[styles.notificationDot, { backgroundColor: colors.error }]}>
+              <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -301,13 +317,21 @@ const styles = StyleSheet.create({
   },
   notificationDot: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
     borderWidth: 2,
     borderColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 2,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '800',
   },
   searchContainer: {
     flexDirection: 'row',

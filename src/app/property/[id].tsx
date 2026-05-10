@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 import { propertyService } from '../../services/propertyService';
 import { DUMMY_PROPERTIES } from '../../data/dummyProperties';
 import { Image } from 'expo-image';
+import { formatPhoneForWhatsApp } from '../../utils/phoneUtils';
 
 const { width } = Dimensions.get('window');
 
@@ -341,7 +342,7 @@ export default function PropertyDetailsScreen() {
                 return;
               }
 
-              const formattedPhone = ownerPhone.replace(/\D/g, ''); // Extract just digits
+              const formattedPhone = formatPhoneForWhatsApp(ownerPhone);
               const message = `Hello! I saw your property "${property.title}" in ${property.location} on SpaceFinder. Is it still available?`;
               
               showAlert(

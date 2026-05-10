@@ -7,6 +7,7 @@ import { useSettingsStore } from '../store/useSettingsStore';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useThemeColor } from '../hooks/useThemeColor';
 import { AlertProvider } from '../providers/AlertProvider';
+import { AnimatedSplashScreen } from '../components/AnimatedSplashScreen';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { propertyService } from '../services/propertyService';
@@ -78,18 +79,12 @@ function RootLayoutNav() {
     }
   }, [appIsReady, session, segments, hasFinishedOnboarding]);
 
-  // 4. Splash Screen Management
-  useEffect(() => {
-    if (appIsReady) {
-      SplashScreen.hideAsync().catch(err => console.warn("Splash screen hide failed:", err));
-    }
-  }, [appIsReady]);
-
-  if (!appIsReady) {
-    return null;
-  }
-
-  return <Slot />;
+  return (
+    <>
+      {appIsReady && <Slot />}
+      <AnimatedSplashScreen isAppReady={appIsReady} />
+    </>
+  );
 }
 
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
