@@ -1,320 +1,207 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Switch, Linking } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking } from 'react-native';
 import { useAuth } from '../../providers/AuthProvider';
 import { supabase } from '../../utils/supabase';
-import { Ionicons } from '@expo/vector-icons';
+import { User, Shield, CreditCard, HelpCircle, LogOut, Settings, Star, ChevronRight, Moon, Sun } from 'lucide-react-native';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { useThemeColor } from '../../hooks/useThemeColor';
 import Toast from 'react-native-toast-message';
 import { useCustomAlert } from '../../providers/AlertProvider';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+import { useSavedStore } from '../../store/useSavedStore';
+import { chatService } from '../../services/chatService';
+import { SectionHeader } from '../../components/premium/SectionHeader';
+import { PremiumAvatar } from '../../components/premium/PremiumAvatar';
+import { PremiumCard } from '../../components/premium/PremiumCard';
 
 export default function ProfileScreen() {
   const { user, profile: authProfile } = useAuth();
-  const { theme, setTheme } = useSettingsStore();
   const { colors, isDark } = useThemeColor();
+  const { theme, setTheme } = useSettingsStore();
+  const { savedIds } = useSavedStore();
   const { showAlert } = useCustomAlert();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  
+  const [chatsCount, setChatsCount] = useState(0);
 
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-
-  const handleAvatarPress = () => {
-    Toast.show({ type: 'success', text1: 'Coming Soon', text2: 'Image picker implementation required for Avatar uploads.' });
-  };
-
-  const handleSupportPress = () => {
-    Linking.openURL('mailto:support@spacefinder.gh').catch(err => {
-      console.error("Failed to open email:", err);
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Could not open email client.' });
-    });
-  };
+  useFocusEffect(
+    useCallback(() => {
+      if (user?.id) {
+        chatService.getUserChats(user.id).then(chats => {
+          setChatsCount(chats.length);
+        });
+      }
+    }, [user?.id])
+  );
 
   const handleLogout = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     showAlert(
-      "Secure Sign Out",
-      "Are you sure you want to log out of your SpaceFinder account?",
+      "Sign Out",
+      "Are you sure you want to exit your premium session?",
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Log Out", 
-          style: "destructive", 
-          onPress: () => supabase.auth.signOut() 
-        }
+        { text: "Sign Out", style: "destructive", onPress: () => supabase.auth.signOut() }
       ]
     );
   };
 
+  const MenuButton = ({ icon: Icon, title, subtitle, onPress, destructive = false }: any) => (
+    <TouchableOpacity 
+        onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onPress?.();
+        }}
+        activeOpacity={0.7}
+        style={[styles.menuItem, { borderBottomColor: colors.border }]}
+    >
+        <View style={[styles.menuIcon, { backgroundColor: destructive ? 'rgba(239, 68, 68, 0.1)' : colors.surface }]}>
+            <Icon size={20} color={destructive ? '#EF4444' : colors.primary} />
+        </View>
+        <View style={styles.menuText}>
+            <Text style={[styles.menuTitle, { color: destructive ? '#EF4444' : colors.text }]}>{title}</Text>
+            {subtitle && <Text style={[styles.menuSubtitle, { color: colors.textSecondary }]}>{subtitle}</Text>}
+        </View>
+        {!destructive && <ChevronRight size={20} color={colors.textMuted} />}
+    </TouchableOpacity>
+  );
+
   return (
-    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
-      {/* Header Profile Section */}
-      <View style={styles.header}>
-        <TouchableOpacity style={[styles.avatarPlaceholder, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={handleAvatarPress}>
-          <Ionicons name="person" size={40} color={colors.textSecondary} />
-          <View style={[styles.editAvatarIcon, { borderColor: colors.background }]}>
-            <Ionicons name="camera" size={14} color="#fff" />
-          </View>
-        </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>{authProfile?.full_name || user?.email}</Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          {authProfile?.role === 'owner' ? 'Landlord Account' : 'Seeker Account'}
-        </Text>
-      </View>
-
-      {/* Main Settings Group */}
-      <View style={styles.sectionContainer}>
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Account Management</Text>
-        <View style={[styles.cardGroup, { backgroundColor: colors.card }]}>
-          <TouchableOpacity 
-            style={styles.linkRow} 
-            onPress={() => router.push('/profile/edit')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.settingRowLeft}>
-              <View style={[styles.iconBox, { backgroundColor: colors.primary + '15' }]}>
-                <Ionicons name="person-outline" size={20} color={colors.primary} />
-              </View>
-              <View>
-                <Text style={[styles.settingText, { color: colors.text }]}>Personal Details</Text>
-                <Text style={[styles.settingSubtext, { color: colors.textSecondary }]}>Name, Phone & Security</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.border} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* App Settings Group */}
-      <View style={styles.sectionContainer}>
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>App Preferences</Text>
-        <View style={[styles.cardGroup, { backgroundColor: colors.card }]}>
-          <View style={styles.settingRow}>
-            <View style={styles.settingRowLeft}>
-              <View style={[styles.iconBox, { backgroundColor: '#FF950015' }]}>
-                <Ionicons name="notifications-outline" size={20} color="#FF9500" />
-              </View>
-              <Text style={[styles.settingText, { color: colors.text }]}>Push Notifications</Text>
-            </View>
-            <Switch 
-              value={notificationsEnabled} 
-              onValueChange={setNotificationsEnabled} 
-              trackColor={{ false: colors.border, true: colors.success }}
-            />
-          </View>
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-          
-          <View style={styles.themeSection}>
-            <View style={[styles.settingRowLeft, { padding: 16, paddingBottom: 12 }]}>
-              <View style={[styles.iconBox, { backgroundColor: '#5856D615' }]}>
-                <Ionicons name="color-palette-outline" size={20} color="#5856D6" />
-              </View>
-              <Text style={[styles.settingText, { color: colors.text }]}>Appearance</Text>
-            </View>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+        
+        {/* Header Section */}
+        <View style={styles.header}>
+            <SectionHeader title="Account" subtitle="Luxury discovery preferences" />
             
-            <View style={styles.themeSelector}>
-              {(['light', 'dark', 'system'] as const).map((t) => (
-                <TouchableOpacity
-                  key={t}
-                  style={[
-                    styles.themeOption,
-                    theme === t && { backgroundColor: colors.primary, borderColor: colors.primary }
-                  ]}
-                  onPress={() => setTheme(t)}
-                >
-                  <Ionicons 
-                    name={t === 'light' ? 'sunny' : t === 'dark' ? 'moon' : 'contrast'} 
-                    size={16} 
-                    color={theme === t ? '#fff' : colors.textSecondary} 
-                  />
-                  <Text style={[
-                    styles.themeOptionText, 
-                    { color: theme === t ? '#fff' : colors.textSecondary }
-                  ]}>
-                    {t.charAt(0).toUpperCase() + t.slice(1)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+            <View style={styles.profileHero}>
+                <PremiumAvatar size={100} online={true} uri={authProfile?.avatar_url} name={authProfile?.full_name} />
+                <View style={styles.profileDetails}>
+                    <Text style={[styles.userName, { color: colors.text }]}>{authProfile?.full_name || 'Premium Member'}</Text>
+                    <View style={styles.badgeRow}>
+                        <View style={[styles.premiumBadge, { backgroundColor: colors.primary }]}>
+                            <Star size={12} color={colors.badgeText} fill={colors.badgeText} />
+                            <Text style={[styles.premiumText, { color: colors.badgeText }]}>GOLD MEMBER</Text>
+                        </View>
+                        <Text style={[styles.locationText, { color: colors.textMuted }]}>Accra, Ghana</Text>
+                    </View>
+                </View>
             </View>
-          </View>
         </View>
-      </View>
 
-      {/* Support Group */}
-      <View style={styles.sectionContainer}>
-        <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Support</Text>
-        <View style={[styles.cardGroup, { backgroundColor: colors.card }]}>
-          <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/profile/support')}>
-            <View style={styles.settingRowLeft}>
-              <View style={[styles.iconBox, { backgroundColor: '#34C75915' }]}>
-                <Ionicons name="help-buoy-outline" size={20} color="#34C759" />
-              </View>
-              <Text style={[styles.settingText, { color: colors.text }]}>Contact Support</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.border} />
-          </TouchableOpacity>
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-          <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/profile/privacy')}>
-            <View style={styles.settingRowLeft}>
-              <View style={[styles.iconBox, { backgroundColor: '#5AC8FA15' }]}>
-                <Ionicons name="shield-checkmark-outline" size={20} color="#5AC8FA" />
-              </View>
-              <Text style={[styles.settingText, { color: colors.text }]}>Privacy Policy</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.border} />
-          </TouchableOpacity>
+        {/* Stats Row */}
+        <View style={styles.statsRow}>
+            <PremiumCard elevated style={styles.statCard}>
+                <Text style={[styles.statVal, { color: colors.text }]}>{savedIds.length}</Text>
+                <Text style={[styles.statLab, { color: colors.textMuted }]}>SAVED</Text>
+            </PremiumCard>
+            <PremiumCard elevated style={styles.statCard}>
+                <Text style={[styles.statVal, { color: colors.text }]}>{chatsCount}</Text>
+                <Text style={[styles.statLab, { color: colors.textMuted }]}>CHATS</Text>
+            </PremiumCard>
+            <PremiumCard elevated style={styles.statCard}>
+                <Text style={[styles.statVal, { color: colors.text }]}>0</Text>
+                <Text style={[styles.statLab, { color: colors.textMuted }]}>OFFERS</Text>
+            </PremiumCard>
         </View>
-      </View>
 
-      <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: colors.card }]} onPress={handleLogout}>
-        <Ionicons name="log-out-outline" size={20} color={colors.error} />
-        <Text style={[styles.logoutText, { color: colors.error }]}>Log Out Securely</Text>
-      </TouchableOpacity>
-      
-      <Text style={[styles.versionText, { color: colors.textSecondary }]}>SpaceFinder Ghana v1.0.0</Text>
-    </ScrollView>
+        {/* Menu Sections */}
+        <View style={styles.menuSection}>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>PREFERENCES</Text>
+            <PremiumCard style={styles.menuContainer}>
+                <MenuButton 
+                    icon={User} 
+                    title="Edit Profile" 
+                    subtitle="Update your personal & contact details" 
+                    onPress={() => router.push('/profile/edit')}
+                />
+                <MenuButton 
+                    icon={Shield} 
+                    title="Security & Privacy" 
+                    subtitle="2FA and data management" 
+                    onPress={() => router.push('/profile/privacy')}
+                />
+                <MenuButton 
+                    icon={CreditCard} 
+                    title="Subscription" 
+                    subtitle="Manage your premium membership" 
+                    onPress={() => router.push('/profile/subscription')}
+                />
+            </PremiumCard>
+        </View>
+
+        <View style={styles.menuSection}>
+            <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>SUPPORT</Text>
+            <PremiumCard style={styles.menuContainer}>
+                <MenuButton 
+                    icon={HelpCircle} 
+                    title="Help Center" 
+                    subtitle="Access our 24/7 concierge support" 
+                    onPress={() => router.push('/profile/support')}
+                />
+                <MenuButton 
+                    icon={isDark ? Moon : Sun} 
+                    title="Appearance" 
+                    subtitle={theme === 'system' ? 'Current Theme: System' : `Current Theme: ${theme.charAt(0).toUpperCase() + theme.slice(1)}`} 
+                    onPress={() => {
+                        showAlert(
+                            "Select Appearance",
+                            "Choose your preferred theme",
+                            [
+                                { text: "Light", onPress: () => setTheme('light') },
+                                { text: "Dark", onPress: () => setTheme('dark') },
+                                { text: "Match System", onPress: () => setTheme('system') },
+                                { text: "Cancel", style: "cancel" }
+                            ]
+                        );
+                    }}
+                />
+                <MenuButton 
+                    icon={Settings} 
+                    title="App Settings" 
+                    subtitle="Notifications, language, and theme" 
+                    onPress={() => router.push('/profile/settings')}
+                />
+                <MenuButton 
+                    icon={LogOut} 
+                    title="Sign Out" 
+                    destructive 
+                    onPress={handleLogout}
+                />
+            </PremiumCard>
+        </View>
+
+        <Text style={[styles.versionText, { color: colors.textMuted }]}>SPACEFINDER GHANA V1.4.2</Text>
+
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 20,
-    paddingBottom: 40,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 32,
-    marginTop: 10,
-  },
-  avatarPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    position: 'relative',
-  },
-  editAvatarIcon: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: '#007AFF',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  sectionContainer: {
-    marginBottom: 28,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    paddingLeft: 4,
-  },
-  cardGroup: {
-    borderRadius: 24,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  iconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  linkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 18,
-  },
-  settingRowLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  settingText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  settingSubtext: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  divider: {
-    height: 1,
-    marginLeft: 68,
-    opacity: 0.5,
-  },
-  logoutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 18,
-    borderRadius: 20,
-    justifyContent: 'center',
-    gap: 10,
-    marginTop: 8,
-  },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  versionText: {
-    textAlign: 'center',
-    marginTop: 32,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  themeSection: {
-    paddingBottom: 16,
-  },
-  themeSelector: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  themeOption: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: 14,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
-  },
-  themeOptionText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
+  container: { flex: 1 },
+  header: { paddingHorizontal: 24, paddingTop: 20 },
+  profileHero: { flexDirection: 'row', alignItems: 'center', marginTop: 32, gap: 24 },
+  profileDetails: { flex: 1 },
+  userName: { fontSize: 24, fontFamily: 'PlayfairDisplay_700Bold', marginBottom: 8 },
+  badgeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  premiumBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, gap: 6 },
+  premiumText: { fontSize: 9, fontFamily: 'Inter_700Bold', letterSpacing: 0.5 },
+  locationText: { fontSize: 13, fontFamily: 'Inter_400Regular' },
+  statsRow: { flexDirection: 'row', paddingHorizontal: 24, marginTop: 40, gap: 12 },
+  statCard: { flex: 1, paddingVertical: 20, alignItems: 'center', justifyContent: 'center' },
+  statVal: { fontSize: 20, fontFamily: 'Inter_700Bold' },
+  statLab: { fontSize: 10, fontFamily: 'Inter_600SemiBold', marginTop: 4, letterSpacing: 1 },
+  menuSection: { marginTop: 40, paddingHorizontal: 24 },
+  sectionLabel: { fontSize: 12, fontFamily: 'Inter_700Bold', letterSpacing: 1.5, marginBottom: 16, marginLeft: 4 },
+  menuContainer: { overflow: 'hidden' },
+  menuItem: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1 },
+  menuIcon: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  menuText: { flex: 1, marginLeft: 16 },
+  menuTitle: { fontSize: 16, fontFamily: 'Inter_600SemiBold' },
+  menuSubtitle: { fontSize: 13, fontFamily: 'Inter_400Regular', marginTop: 2 },
+  versionText: { textAlign: 'center', marginTop: 60, fontSize: 12, fontFamily: 'Inter_700Bold', letterSpacing: 2 },
 });

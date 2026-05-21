@@ -7,6 +7,7 @@ export type UserProfile = {
   role: 'owner' | 'seeker' | 'admin';
   full_name?: string;
   phone_number?: string;
+  avatar_url?: string;
 };
 
 type AuthContextType = {

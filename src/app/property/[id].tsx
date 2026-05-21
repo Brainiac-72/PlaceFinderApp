@@ -1,10 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useMemo, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Platform, ActivityIndicator, Linking, Share } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useMemo, useEffect, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Platform, ActivityIndicator, Share, Alert } from 'react-native';
+import { ChevronLeft, Share2, Heart, MapPin, Bed, Bath, Maximize, MessageSquare, Trash2, CheckCircle2, Clock, XCircle, Star } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { File, Paths } from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
 import { useSavedStore } from '../../store/useSavedStore';
 import { useThemeColor } from '../../hooks/useThemeColor';
 import { useCustomAlert } from '../../providers/AlertProvider';
@@ -12,9 +10,19 @@ import { useAuth } from '../../providers/AuthProvider';
 import { getAmenityById } from '../../constants/Amenities';
 import { useQuery } from '@tanstack/react-query';
 import { propertyService } from '../../services/propertyService';
+import { chatService } from '../../services/chatService';
 import { DUMMY_PROPERTIES } from '../../data/dummyProperties';
 import { Image } from 'expo-image';
-import { formatPhoneForWhatsApp } from '../../utils/phoneUtils';
+import * as Haptics from 'expo-haptics';
+import { BlurView } from 'expo-blur';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { PremiumButton } from '../../components/premium/PremiumButton';
+import { PremiumBadge } from '../../components/premium/PremiumBadge';
+import { SectionHeader } from '../../components/premium/SectionHeader';
+import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
+import { Linking } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -22,644 +30,265 @@ export default function PropertyDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useThemeColor();
+  const { colors } = useThemeColor();
   const { showAlert } = useCustomAlert();
-  
   const { user } = useAuth();
 
-  // 1. Fetch Property Data with React Query
-  const { 
-    data: property, 
-    isLoading: loading, 
-    refetch 
-  } = useQuery({
+  const { data: property, isLoading: loading } = useQuery({
     queryKey: ['property', id],
     queryFn: () => propertyService.getPropertyById(id!),
     enabled: !!id,
-    initialData: () => {
-        // Optimistically use dummy data if it matches
-        return DUMMY_PROPERTIES.find(p => p.id === id) as any;
-    }
+    initialData: () => DUMMY_PROPERTIES.find(p => p.id === id) as any
   });
 
-  const ownerPhone = property?.owner_phone || (property as any)?.ownerContact;
-  const actionLoading = false; // Simplified for now, or move to a separate mutation state
-
-  const isOwner = useMemo(() => {
-    return user && property && user.id === property.owner_id;
-  }, [user, property]);
-
+  const isOwner = useMemo(() => user && property && user.id === property.owner_id, [user, property]);
   const isSaved = useSavedStore(state => state.isSaved(id || ''));
   const toggleSaved = useSavedStore(state => state.toggleSaved);
+  
+  const snapPoints = useMemo(() => isOwner ? ['50%'] : ['35%'], [isOwner]);
 
-  // 2. Increment View Count in background
   useEffect(() => {
     if (id && user && property && user.id !== property.owner_id) {
         propertyService.incrementViewCount(id);
     }
   }, [id, user?.id, !!property]);
 
-  const handleManageListing = () => {
+  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+
+  const handlePresentModalPress = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    bottomSheetModalRef.current?.present();
+  }, []);
+
+  const renderBackdrop = useCallback(
+    (props: any) => <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.7} />,
+    []
+  );
+
+  const handleInAppMessage = async () => {
+    if (!property || !user) {
+      showAlert('Error', 'You must be logged in to send a message.');
+      return;
+    }
+    try {
+      bottomSheetModalRef.current?.dismiss();
+      const chatId = await chatService.getOrCreateChat(property.id, user.id, property.owner_id);
+      if (chatId) router.push(`/chat/${chatId}`);
+      else showAlert('Error', 'Could not start conversation.');
+    } catch (e) {
+      showAlert('Error', 'Failed to start chat.');
+    }
+  };
+
+  const handleUpdateStatus = async (status: string) => {
     if (!property) return;
-
-    showAlert(
-      'Manage Listing',
-      'What would you like to do with this property?',
-      [
-        { 
-          text: 'Update Status', 
-          onPress: () => {
-            showAlert(
-              'Update Status',
-              'Select current occupancy status:',
-              [
-                { text: 'Available', onPress: () => performStatusUpdate('Available') },
-                { text: 'Negotiations', onPress: () => performStatusUpdate('Negotiations') },
-                { text: 'Taken', onPress: () => performStatusUpdate('Taken') },
-                { text: 'Cancel', style: 'cancel' }
-              ]
-            );
-          } 
-        },
-        { 
-          text: 'Make Changes', 
-          onPress: () => router.push(`/property/edit/${property.id}`)
-        },
-        { 
-          text: 'Delete Listing', 
-          style: 'destructive',
-          onPress: () => {
-            showAlert(
-              'Delete Listing',
-              'Are you absolutely sure? This cannot be undone.',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Delete', style: 'destructive', onPress: performDelete }
-              ]
-            );
-          } 
-        },
-        { text: 'Cancel', style: 'cancel' }
-      ]
-    );
+    bottomSheetModalRef.current?.dismiss();
+    const success = await propertyService.updatePropertyStatus(property.id, status);
+    if (success) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      showAlert('Success', `Property marked as ${status}.`);
+      router.replace(`/property/${property.id}`);
+    } else {
+      showAlert('Error', 'Failed to update status.');
+    }
   };
 
-  const performStatusUpdate = async (newStatus: string) => {
-    // This should ideally be a mutation
-    showAlert('Coming Soon', 'Status updates via mutations will be implemented next.');
-  };
-
-  const performDelete = async () => {
-    // This should ideally be a mutation
-    showAlert('Coming Soon', 'Delete via mutations will be implemented next.');
+  const handleDeleteProperty = () => {
+    bottomSheetModalRef.current?.dismiss();
+    Alert.alert('Delete Listing', 'Are you sure you want to permanently delete this listing?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+          if (!property) return;
+          const success = await propertyService.deleteProperty(property.id);
+          if (success) router.replace('/(tabs)');
+          else showAlert('Error', 'Failed to delete listing.');
+      }}
+    ]);
   };
 
   const handleShare = async () => {
     if (!property) return;
     try {
       await Share.share({
-        message: `Check out this space on SpaceFinder Ghana: ${property.title} in ${property.location}. Price: ${property.currency} ${property.price.toLocaleString()}`,
+        message: `Check out this space on SpaceFinder: ${property.title} in ${property.location}.`,
         title: property.title,
       });
-
-      // Increment share count in background
-      if (user?.id !== property.owner_id) {
-        propertyService.incrementShareCount(property.id);
-      }
-    } catch (error: any) {
-      console.error('Error sharing property:', error.message);
-    }
+      if (user?.id !== property.owner_id) propertyService.incrementShareCount(property.id);
+    } catch (error) {}
   };
 
   if (loading && !property) {
     return (
-      <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={[styles.center, { backgroundColor: '#0A0F1E' }]}>
+        <ActivityIndicator size="large" color="#F59E0B" />
       </View>
     );
   }
 
-  if (!property) {
-    return (
-      <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
-        <Text style={[styles.errorText, { color: colors.text }]}>Property not found.</Text>
-        <TouchableOpacity onPress={() => router.back()} style={[styles.backBtnError, { backgroundColor: colors.primary }]}>
-          <Text style={styles.backText}>Go Back</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  if (!property) return null;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-        {/* Header Image */}
-        <View style={styles.imageHeader}>
-          <Image 
-            source={{ uri: property.imageUrl }} 
-            style={styles.image} 
-            contentFit="cover"
-            transition={300}
-          />
+    <View style={[styles.container, { backgroundColor: '#0A0F1E' }]}>
+      <StatusBar style="light" />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 160 }}>
+        {/* Cinematic Header */}
+        <View style={styles.heroContainer}>
+          <Image source={{ uri: property.imageUrl }} style={styles.heroImage} contentFit="cover" transition={400} />
+          <LinearGradient colors={['rgba(10,15,30,0.4)', 'transparent', 'rgba(10,15,30,0.8)']} style={StyleSheet.absoluteFill} />
           
-          <SafeAreaView style={styles.topActions}>
-            <TouchableOpacity 
-              style={[styles.circleButton, { marginTop: Platform.OS === 'android' ? 16 : 0, backgroundColor: colors.card }]} 
-              onPress={() => router.back()}
-            >
-              <Ionicons name="arrow-back" size={24} color={colors.text} />
+          <SafeAreaView style={styles.navBar}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
+              <BlurView intensity={60} tint="dark" style={styles.blurCircle}>
+                <ChevronLeft size={24} color="#FFF" />
+              </BlurView>
             </TouchableOpacity>
             
-            <View style={styles.rightActions}>
-              <TouchableOpacity 
-                style={[styles.circleButton, { marginTop: Platform.OS === 'android' ? 16 : 0, backgroundColor: colors.card }]} 
-                onPress={handleShare}
-              >
-                <Ionicons name="share-social-outline" size={22} color={colors.text} />
+            <View style={styles.navRight}>
+              <TouchableOpacity onPress={handleShare} style={styles.iconButton}>
+                <BlurView intensity={60} tint="dark" style={styles.blurCircle}>
+                  <Share2 size={20} color="#FFF" />
+                </BlurView>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.circleButton, { marginTop: Platform.OS === 'android' ? 16 : 0, backgroundColor: colors.card }]} 
-                onPress={() => toggleSaved(property.id)}
-              >
-                <Ionicons name={isSaved ? "heart" : "heart-outline"} size={22} color={isSaved ? colors.error : colors.text} />
+              <TouchableOpacity onPress={() => toggleSaved(property.id)} style={styles.iconButton}>
+                <BlurView intensity={60} tint="dark" style={styles.blurCircle}>
+                  <Heart size={20} color={isSaved ? '#F59E0B' : '#FFF'} fill={isSaved ? '#F59E0B' : 'transparent'} />
+                </BlurView>
               </TouchableOpacity>
             </View>
           </SafeAreaView>
+
+          <View style={styles.heroBadgeRow}>
+             <PremiumBadge label={property.status} variant={property.status.toLowerCase() === 'available' ? 'success' : 'warning'} />
+             <View style={styles.featuredTag}>
+                <Star size={12} color="#F59E0B" fill="#F59E0B" />
+                <Text style={styles.featuredText}>PREMIUM LISTING</Text>
+             </View>
+          </View>
         </View>
 
         {/* Content Body */}
-        <View style={[styles.body, { backgroundColor: colors.background }]}>
+        <Animated.View entering={FadeInDown.duration(600)} style={styles.content}>
+          <Text style={styles.title}>{property.title}</Text>
           
-          {/* Listing Insights for Owner */}
-          {isOwner && (
-            <View style={[styles.insightsContainer, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}>
-              <View style={styles.insightHeader}>
-                <View style={[styles.insightDot, { backgroundColor: colors.primary }]} />
-                <Text style={[styles.insightTitle, { color: colors.primary }]}>Listing Performance</Text>
-              </View>
-              <View style={styles.insightStats}>
-                <View style={styles.statItem}>
-                  <Ionicons name="eye-outline" size={20} color={colors.text} />
-                  <View>
-                    <Text style={[styles.statValue, { color: colors.text }]}>{property.viewCount || 0}</Text>
-                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total Views</Text>
+          <View style={styles.locationContainer}>
+            <MapPin size={18} color="#F59E0B" />
+            <Text style={styles.locationText}>{property.location}</Text>
+          </View>
+
+          <View style={styles.statsRow}>
+            <View style={styles.statBox}>
+                <Bed size={24} color="#F59E0B" />
+                <Text style={styles.statValue}>{property.bedrooms}</Text>
+                <Text style={styles.statLabel}>Beds</Text>
+            </View>
+            <View style={styles.statBox}>
+                <Bath size={24} color="#F59E0B" />
+                <Text style={styles.statValue}>{property.bathrooms}</Text>
+                <Text style={styles.statLabel}>Baths</Text>
+            </View>
+            <View style={styles.statBox}>
+                <Maximize size={24} color="#F59E0B" />
+                <Text style={styles.statValue}>{property.areaSize}</Text>
+                <Text style={styles.statLabel}>sqm</Text>
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          <SectionHeader title="The Space" subtitle="A detailed look at this property" light />
+          <Text style={styles.description}>{property.description}</Text>
+
+          <View style={styles.divider} />
+
+          <SectionHeader title="Amenities" subtitle="What this place offers" light />
+          <View style={styles.amenitiesGrid}>
+            {property.amenities?.map((id: string) => {
+              const amenity = getAmenityById(id);
+              return amenity ? (
+                <View key={id} style={styles.amenityItem}>
+                  <View style={styles.amenityIcon}>
+                    <Text style={{ fontSize: 16 }}>{amenity.icon === 'wifi-outline' ? '📶' : amenity.icon === 'car-outline' ? '🚗' : '✨'}</Text>
                   </View>
+                  <Text style={styles.amenityLabel}>{amenity.label}</Text>
                 </View>
-                <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-                <View style={styles.statItem}>
-                  <Ionicons name="share-social-outline" size={20} color={colors.text} />
-                  <View>
-                    <Text style={[styles.statValue, { color: colors.text }]}>{property.shareCount || 0}</Text>
-                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total Shares</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          )}
-
-          <View style={styles.badgeContainer}>
-            <View style={[styles.typeBadge, { backgroundColor: colors.card }]}>
-              <Text style={[styles.typeText, { color: colors.primary }]}>{property.type}</Text>
-            </View>
-            <View style={[
-              styles.statusBadge, 
-              { 
-                backgroundColor: 
-                  property.status.toLowerCase() === 'available' ? colors.success : 
-                  property.status.toLowerCase() === 'negotiations' ? colors.warning : 
-                  colors.error 
-              }
-            ]}>
-              <Text style={styles.statusText}>{property.status}</Text>
-            </View>
+              ) : null;
+            })}
           </View>
-
-          <Text style={[styles.title, { color: colors.text }]}>{property.title}</Text>
-          
-          <View style={styles.locationRow}>
-            <Ionicons name="location-outline" size={18} color={colors.primary} />
-            <Text style={[styles.locationText, { color: colors.textSecondary }]}>{property.location}</Text>
-          </View>
-
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          {/* Overview */}
-          {property.description && (
-            <>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Overview</Text>
-              <Text style={[styles.descriptionText, { color: colors.textSecondary }]}>{property.description}</Text>
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-            </>
-          )}
-
-          {/* Features Row */}
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Main Features</Text>
-          <View style={styles.featuresRow}>
-            {property.bedrooms !== undefined && property.bedrooms !== null && (
-              <View style={[styles.featureBox, { backgroundColor: colors.card, shadowColor: isDark ? '#FFF' : '#000' }]}>
-                <Ionicons name="bed-outline" size={28} color={colors.text} />
-                <Text style={[styles.featureLabel, { color: colors.text }]}>{property.bedrooms} Bed</Text>
-              </View>
-            )}
-            {property.bathrooms !== undefined && property.bathrooms !== null && (
-              <View style={[styles.featureBox, { backgroundColor: colors.card, shadowColor: isDark ? '#FFF' : '#000' }]}>
-                <Ionicons name="water-outline" size={28} color={colors.text} />
-                <Text style={[styles.featureLabel, { color: colors.text }]}>{property.bathrooms} Bath</Text>
-              </View>
-            )}
-            {property.areaSize !== undefined && property.areaSize !== null && (
-              <View style={[styles.featureBox, { backgroundColor: colors.card, shadowColor: isDark ? '#FFF' : '#000' }]}>
-                <Ionicons name="map-outline" size={28} color={colors.text} />
-                <Text style={[styles.featureLabel, { color: colors.text }]}>{property.areaSize} sqm</Text>
-              </View>
-            )}
-          </View>
-
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-          {/* New Dynamic Amenities Section */}
-          {property.amenities && property.amenities.length > 0 && (
-            <>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Space Amenities</Text>
-              <View style={styles.amenitiesGrid}>
-                {property.amenities.map((amenityId: string, idx: number) => {
-                  const amenity = getAmenityById(amenityId);
-                  if (!amenity) return null;
-                  return (
-                    <View key={idx} style={[styles.amenityCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                      <View style={[styles.amenityIconContainer, { backgroundColor: colors.primary + '10' }]}>
-                        <Ionicons name={amenity.icon as any} size={20} color={colors.primary} />
-                      </View>
-                      <Text style={[styles.amenityLabel, { color: colors.textSecondary }]}>{amenity.label}</Text>
-                    </View>
-                  );
-                })}
-              </View>
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-            </>
-          )}
-
-          {/* Dummy Map Placeholder */}
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Map Location</Text>
-          <View style={[styles.mapPlaceholder, { backgroundColor: colors.card }]}>
-            <Ionicons name="map" size={48} color={colors.border} />
-            <Text style={[styles.mapText, { color: colors.textSecondary }]}>Google Maps Integration Pending</Text>
-          </View>
-        </View>
+        </Animated.View>
       </ScrollView>
 
-      {/* Floating Bottom Action */}
-      <View style={[styles.bottomBar, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <View style={styles.priceContainer}>
-          <Text style={[styles.priceLabel, { color: colors.textSecondary }]}>Price</Text>
-          <Text style={[styles.priceValue, { color: colors.primary }]}>
-            {property.currency} {property.price.toLocaleString()}
-            {property.type === 'Residential' ? '/mo' : ''}
-          </Text>
+      {/* Premium Floating Footer */}
+      <BlurView intensity={100} tint="dark" style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+        <View style={styles.footerPrice}>
+          <Text style={styles.footerLabel}>MONTHLY RENT</Text>
+          <Text style={styles.footerValue}>{property.currency}{property.price.toLocaleString()}</Text>
         </View>
-        {isOwner ? (
-          <TouchableOpacity 
-            style={[styles.manageBtn, { backgroundColor: '#1C1C1E' }]}
-            onPress={handleManageListing}
-            disabled={actionLoading}
-          >
-            {actionLoading ? (
-              <ActivityIndicator size="small" color="#fff" />
+        <PremiumButton 
+          title={isOwner ? 'Manage Space' : 'Contact Owner'} 
+          onPress={handlePresentModalPress} 
+          style={{ flex: 1.2 }}
+        />
+      </BlurView>
+
+      <BottomSheetModal
+        ref={bottomSheetModalRef}
+        snapPoints={snapPoints}
+        backdropComponent={renderBackdrop}
+        backgroundStyle={{ backgroundColor: '#111827', borderRadius: 32 }}
+        handleIndicatorStyle={{ backgroundColor: '#374151', width: 40 }}
+      >
+        <BottomSheetView style={styles.sheetBody}>
+          <Text style={styles.sheetTitle}>{isOwner ? 'Manage Your Listing' : 'Get in Touch'}</Text>
+          <View style={{ gap: 12, marginTop: 24 }}>
+            {isOwner ? (
+              <>
+                <PremiumButton title="Mark as Available" variant="secondary" onPress={() => handleUpdateStatus('Available')} icon={<CheckCircle2 size={20} color="#10B981" />} />
+                <PremiumButton title="Mark as Taken" variant="secondary" onPress={() => handleUpdateStatus('Taken')} icon={<XCircle size={20} color="#EF4444" />} />
+                <PremiumButton title="Delete Listing" variant="ghost" onPress={handleDeleteProperty} icon={<Trash2 size={20} color="#EF4444" />} textStyle={{ color: '#EF4444' }} />
+              </>
             ) : (
               <>
-                <Ionicons name="settings-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
-                <Text style={styles.manageBtnText}>Manage Listing</Text>
+                <PremiumButton title="Message in App" onPress={handleInAppMessage} icon={<MessageSquare size={20} color="#0A0F1E" />} />
+                <PremiumButton title="Call Property Manager" variant="secondary" onPress={() => Linking.openURL(`tel:${property.owner_phone || '0000000000'}`)} />
               </>
             )}
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity 
-            style={[styles.contactBtn, { backgroundColor: colors.primary }]}
-            onPress={() => {
-              if (!ownerPhone) {
-                showAlert('Owner unavailable', 'This owner has not provided a valid phone number.');
-                return;
-              }
-
-              const formattedPhone = formatPhoneForWhatsApp(ownerPhone);
-              const message = `Hello! I saw your property "${property.title}" in ${property.location} on SpaceFinder. Is it still available?`;
-              
-              showAlert(
-                'Contact Options',
-                'Would you like to send a direct message, or physically attach the image?',
-                [
-                  {
-                    text: 'Direct Text Message',
-                    onPress: () => {
-                      const url = `whatsapp://send?phone=${formattedPhone}&text=${encodeURIComponent(message + `\n\nReference Link: ${property.imageUrl}`)}`;
-                      Linking.canOpenURL(url).then(supported => {
-                        if (supported) {
-                          Linking.openURL(url);
-                        } else {
-                          Linking.openURL(`tel:${formattedPhone}`);
-                        }
-                      });
-                    }
-                  },
-                  {
-                    text: 'Attach Image (Share)',
-                    onPress: async () => {
-                      try {
-                        const destination = new File(Paths.cache, 'property-reference.jpg');
-                        const file = await File.downloadFileAsync(
-                          property.imageUrl,
-                          destination
-                        );
-                        const uri = file.uri;
-                        await Sharing.shareAsync(uri, {
-                          dialogTitle: message,
-                          mimeType: 'image/jpeg',
-                          UTI: 'public.jpeg'
-                        });
-                      } catch (e) {
-                        showAlert('Error', 'Failed to attach image');
-                        console.error(e);
-                      }
-                    }
-                  },
-                  { text: 'Cancel', style: 'cancel' }
-                ]
-              );
-            }}
-          >
-            <Text style={styles.contactBtnText}>Contact Owner</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+          </View>
+        </BottomSheetView>
+      </BottomSheetModal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: 18,
-    marginBottom: 16,
-  },
-  backBtnError: {
-    padding: 12,
-    borderRadius: 8,
-  },
-  backText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  imageHeader: {
-    width: '100%',
-    height: 350,
-    position: 'relative',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  topActions: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  rightActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  circleButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  body: {
-    padding: 24,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    marginTop: -32,
-  },
-  badgeContainer: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
-  },
-  typeBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  typeText: {
-    fontWeight: '600',
-    fontSize: 12,
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  statusText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '800',
-    marginBottom: 12,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  locationText: {
-    fontSize: 16,
-  },
-  divider: {
-    height: 1,
-    marginVertical: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 16,
-  },
-  descriptionText: {
-    fontSize: 15,
-    lineHeight: 24,
-  },
-  featuresRow: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  featureBox: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  featureLabel: {
-    marginTop: 8,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  mapPlaceholder: {
-    height: 200,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mapText: {
-    marginTop: 12,
-    fontWeight: '500',
-  },
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 10,
-    borderTopWidth: 1,
-  },
-  priceContainer: {
-    flex: 1,
-  },
-  priceLabel: {
-    fontSize: 13,
-    marginBottom: 4,
-  },
-  priceValue: {
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  contactBtn: {
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  contactBtnText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 16,
-  },
-  manageBtn: {
-    flex: 2,
-    height: 54,
-    borderRadius: 12,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  manageBtnText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  amenitiesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 8,
-    marginBottom: 16,
-  },
-  amenityCard: {
-    width: (width - 72) / 3,
-    padding: 12,
-    borderRadius: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  amenityIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  amenityLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    textAlign: 'center',
-    textTransform: 'uppercase',
-    letterSpacing: 0.2,
-  },
-  insightsContainer: {
-    marginBottom: 24,
-    padding: 16,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  insightHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-  insightDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  insightTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  insightStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  statDivider: {
-    width: 1,
-    height: 30,
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  statLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
+  container: { flex: 1 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  heroContainer: { height: Dimensions.get('window').height * 0.55, width: '100%' },
+  heroImage: { width: '100%', height: '100%' },
+  iconButton: {},
+  navBar: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20 },
+  navRight: { flexDirection: 'row', gap: 12 },
+  blurCircle: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center', overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  heroBadgeRow: { position: 'absolute', bottom: 40, left: 24, right: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  featuredTag: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(10,15,30,0.8)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(245,158,11,0.2)' },
+  featuredText: { color: '#F59E0B', fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 1 },
+  content: { padding: 24, borderTopLeftRadius: 32, borderTopRightRadius: 32, marginTop: -32, backgroundColor: '#0A0F1E' },
+  title: { fontSize: 32, fontFamily: 'PlayfairDisplay_700Bold', color: '#F9FAFB', marginBottom: 12 },
+  locationContainer: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 32 },
+  locationText: { fontSize: 16, fontFamily: 'Inter_400Regular', color: '#9CA3AF' },
+  statsRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, marginBottom: 32 },
+  statBox: { flex: 1, backgroundColor: '#111827', padding: 20, borderRadius: 20, alignItems: 'center', borderWidth: 1, borderColor: '#1F2937' },
+  statValue: { fontSize: 20, fontFamily: 'Inter_700Bold', color: '#F9FAFB', marginTop: 8 },
+  statLabel: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#6B7280', textTransform: 'uppercase', marginTop: 2 },
+  description: { fontSize: 16, fontFamily: 'Inter_400Regular', color: '#9CA3AF', lineHeight: 26 },
+  divider: { height: 1, backgroundColor: '#1F2937', marginVertical: 32 },
+  amenitiesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  amenityItem: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#111827', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 16, borderWidth: 1, borderColor: '#1F2937' },
+  amenityIcon: { width: 32, height: 32, borderRadius: 8, backgroundColor: '#1F2937', justifyContent: 'center', alignItems: 'center' },
+  amenityLabel: { color: '#F9FAFB', fontSize: 14, fontFamily: 'Inter_600SemiBold' },
+  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 24, paddingTop: 20, flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' },
+  footerPrice: { flex: 1 },
+  footerLabel: { fontSize: 10, fontFamily: 'Inter_700Bold', color: '#6B7280', letterSpacing: 1 },
+  footerValue: { fontSize: 24, fontFamily: 'Inter_700Bold', color: '#F59E0B', marginTop: 2 },
+  sheetBody: { padding: 24 },
+  sheetTitle: { fontSize: 24, fontFamily: 'PlayfairDisplay_700Bold', color: '#F9FAFB', textAlign: 'center' },
 });

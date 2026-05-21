@@ -102,6 +102,28 @@ CREATE POLICY "Authenticated users can upload images."
   ON storage.objects FOR INSERT
   WITH CHECK ( bucket_id = 'properties' AND auth.role() = 'authenticated' );
 
+-- ==========================================
+-- AVATARS STORAGE BUCKET
+-- ==========================================
+INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', true)
+ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "Avatar images are publicly accessible." ON storage.objects;
+DROP POLICY IF EXISTS "Users can upload avatars." ON storage.objects;
+DROP POLICY IF EXISTS "Users can update their avatars." ON storage.objects;
+
+CREATE POLICY "Avatar images are publicly accessible."
+  ON storage.objects FOR SELECT
+  USING ( bucket_id = 'avatars' );
+
+CREATE POLICY "Users can upload avatars."
+  ON storage.objects FOR INSERT
+  WITH CHECK ( bucket_id = 'avatars' AND auth.role() = 'authenticated' );
+
+CREATE POLICY "Users can update their avatars."
+  ON storage.objects FOR UPDATE
+  USING ( bucket_id = 'avatars' AND auth.role() = 'authenticated' );
+
 -- Notifications Table
 create table public.notifications (
   id uuid default gen_random_uuid() primary key,
@@ -129,3 +151,77 @@ create policy "Users can update their own notifications"
 create policy "Users can delete their own notifications"
   on public.notifications for delete
   using ( auth.uid() = user_id );
+
+-- ==========================================
+-- CHATS & MESSAGING
+-- ==========================================
+
+create table public.chats (
+  id uuid default gen_random_uuid() primary key,
+  property_id uuid references public.properties(id) on delete cascade not null,
+  seeker_id uuid references public.profiles(id) not null,
+  owner_id uuid references public.profiles(id) not null,
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now()
+);
+
+alter table public.chats enable row level security;
+
+-- A user can see a chat if they are either the seeker or the owner
+create policy "Users can view their own chats"
+  on public.chats for select
+  using ( auth.uid() = seeker_id or auth.uid() = owner_id );
+
+-- A user can create a chat if they are the seeker
+create policy "Seekers can create chats"
+  on public.chats for insert
+  with check ( auth.uid() = seeker_id );
+
+create table public.messages (
+  id uuid default gen_random_uuid() primary key,
+  chat_id uuid references public.chats(id) on delete cascade not null,
+  sender_id uuid references public.profiles(id) not null,
+  content text not null,
+  is_read boolean default false,
+  created_at timestamp with time zone default now()
+);
+
+alter table public.messages enable row level security;
+
+-- A user can see messages in a chat they belong to
+create policy "Users can view messages in their chats"
+  on public.messages for select
+  using (
+    exists (
+      select 1 from public.chats c
+      where c.id = chat_id and (c.seeker_id = auth.uid() or c.owner_id = auth.uid())
+    )
+  );
+
+-- A user can insert messages into a chat they belong to, and they must be the sender
+create policy "Users can send messages in their chats"
+  on public.messages for insert
+  with check (
+    auth.uid() = sender_id and
+    exists (
+      select 1 from public.chats c
+      where c.id = chat_id and (c.seeker_id = auth.uid() or c.owner_id = auth.uid())
+    )
+  );
+
+-- A user can update messages (e.g. mark as read) if they are in the chat
+create policy "Users can update messages in their chats"
+  on public.messages for update
+  using (
+    exists (
+      select 1 from public.chats c
+      where c.id = chat_id and (c.seeker_id = auth.uid() or c.owner_id = auth.uid())
+    )
+  );
+
+-- ==========================================
+-- MULTI-PROPERTY MESSAGING UPDATES
+-- ==========================================
+
+-- Add an optional attached property to messages so users can share properties in chat
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS attached_property_id uuid references public.properties(id) on delete set null;

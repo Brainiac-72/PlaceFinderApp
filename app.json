@@ -29,7 +29,7 @@
           "backgroundColor": "#FFFFFF"
         }
       ],
-      "expo-sharing"
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,

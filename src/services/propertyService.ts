@@ -53,5 +53,31 @@ export const propertyService = {
             supabase.from('properties').update({ share_count: (data.share_count || 0) + 1 }).eq('id', propertyId).then(() => {});
         }
     });
+  },
+
+  async updatePropertyStatus(propertyId: string, status: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('properties')
+      .update({ status })
+      .eq('id', propertyId);
+    
+    if (error) {
+      console.error('Error updating status:', error);
+      return false;
+    }
+    return true;
+  },
+
+  async deleteProperty(propertyId: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('properties')
+      .delete()
+      .eq('id', propertyId);
+      
+    if (error) {
+      console.error('Error deleting property:', error);
+      return false;
+    }
+    return true;
   }
 };

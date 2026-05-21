@@ -1,16 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, SafeAreaView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useAuth } from '../../providers/AuthProvider';
 import { supabase } from '../../utils/supabase';
-import { Ionicons } from '@expo/vector-icons';
+import { ChevronLeft, User, Phone, Lock, Eye, EyeOff, ShieldCheck, CheckCircle2 } from 'lucide-react-native';
 import { useThemeColor } from '../../hooks/useThemeColor';
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
+import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PremiumInput } from '../../components/premium/PremiumInput';
+import { PremiumButton } from '../../components/premium/PremiumButton';
+import { SectionHeader } from '../../components/premium/SectionHeader';
+import { PremiumAvatar } from '../../components/premium/PremiumAvatar';
+import * as ImagePicker from 'expo-image-picker';
+import { decode } from 'base64-arraybuffer';
 
 export default function EditProfileScreen() {
   const { user, profile, refreshProfile } = useAuth();
-  const { colors, isDark } = useThemeColor();
+  const { colors } = useThemeColor();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
@@ -18,6 +28,8 @@ export default function EditProfileScreen() {
   // Profile data
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [phoneNumber, setPhoneNumber] = useState(profile?.phone_number || '');
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '');
+  const [avatarImage, setAvatarImage] = useState<any>(null);
 
   // Password data
   const [oldPassword, setOldPassword] = useState('');
@@ -38,6 +50,45 @@ export default function EditProfileScreen() {
 
   const isPasswordValid = hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecialChar;
 
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0].base64) {
+      setAvatarImage(result.assets[0]);
+      setAvatarUrl(result.assets[0].uri);
+    }
+  };
+
+  const uploadAvatar = async (): Promise<string | null> => {
+    if (!avatarImage) return avatarUrl; // no new image selected
+
+    try {
+      const ext = avatarImage.uri.split('.').pop() || 'jpeg';
+      const fileName = `${user?.id}_${Date.now()}.${ext}`;
+      const filePath = `public/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, decode(avatarImage.base64), {
+          contentType: `image/${ext}`,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      return data.publicUrl;
+    } catch (error) {
+      console.log('Error uploading avatar:', error);
+      throw error;
+    }
+  };
+
   const handleUpdateProfile = async () => {
     if (!fullName || !phoneNumber) {
       Toast.show({ type: 'error', text1: 'Missing Fields', text2: 'Please fill name and phone number.' });
@@ -46,11 +97,19 @@ export default function EditProfileScreen() {
 
     try {
       setLoading(true);
+      
+      let finalAvatarUrl = avatarUrl;
+      if (avatarImage) {
+        const uploadedUrl = await uploadAvatar();
+        if (uploadedUrl) finalAvatarUrl = uploadedUrl;
+      }
+
       const { error } = await supabase
         .from('profiles')
         .update({
           full_name: fullName,
           phone_number: phoneNumber,
+          avatar_url: finalAvatarUrl,
           updated_at: new Date(),
         })
         .eq('id', user?.id);
@@ -84,8 +143,6 @@ export default function EditProfileScreen() {
 
     try {
       setPasswordLoading(true);
-      
-      // 1. Verify old password by attempting to sign in
       const { error: authError } = await supabase.auth.signInWithPassword({
         email: user?.email || '',
         password: oldPassword,
@@ -93,11 +150,10 @@ export default function EditProfileScreen() {
 
       if (authError) {
         setPasswordLoading(false);
-        Toast.show({ type: 'error', text1: 'Invalid Password', text2: 'The old password you entered is incorrect.' });
+        Toast.show({ type: 'error', text1: 'Invalid Password', text2: 'The old password is incorrect.' });
         return;
       }
 
-      // 2. Update password
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
       });
@@ -117,111 +173,78 @@ export default function EditProfileScreen() {
 
   const renderCriterion = (met: boolean, text: string) => (
     <View style={styles.criterionRow}>
-      <Ionicons 
-        name={met ? "checkmark-circle" : "ellipse-outline"} 
-        size={16} 
-        color={met ? colors.success : colors.textSecondary} 
-        style={{ marginRight: 8 }}
-      />
-      <Text style={[styles.criterionText, { color: met ? colors.success : colors.textSecondary }]}>{text}</Text>
+      <CheckCircle2 size={16} color={met ? '#10B981' : '#6B7280'} />
+      <Text style={[styles.criterionText, { color: met ? '#10B981' : '#9CA3AF' }]}>{text}</Text>
     </View>
   );
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
-        style={{ flex: 1 }}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Edit Profile</Text>
-          <View style={{ width: 40 }} />
-        </View>
-
-        <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-          {/* Personal Details Section */}
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Personal Information</Text>
-          <View style={[styles.card, { backgroundColor: colors.card }]}>
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Full Name</Text>
-              <View style={[styles.inputContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                <Ionicons name="person-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-                <TextInput
-                  style={[styles.input, { color: colors.text }]}
-                  value={fullName}
-                  onChangeText={setFullName}
-                  placeholder="Enter your full name"
-                  placeholderTextColor={colors.textSecondary}
-                />
-              </View>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Phone Number</Text>
-              <View style={[styles.inputContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                <Ionicons name="call-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-                <TextInput
-                  style={[styles.input, { color: colors.text }]}
-                  value={phoneNumber}
-                  onChangeText={setPhoneNumber}
-                  keyboardType="phone-pad"
-                  placeholder="Enter your phone number"
-                  placeholderTextColor={colors.textSecondary}
-                />
-              </View>
-            </View>
-
-            <TouchableOpacity 
-              style={[styles.actionBtn, { backgroundColor: colors.primary }]} 
-              onPress={handleUpdateProfile}
-              disabled={loading}
-            >
-              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.actionBtnText}>Save Changes</Text>}
+    <View style={[styles.container, { backgroundColor: '#0A0F1E', paddingTop: insets.top }]}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+              <ChevronLeft size={24} color="#FFF" />
             </TouchableOpacity>
+            <SectionHeader title="Settings" subtitle="Manage your account & security" />
           </View>
 
-          {/* Security Section */}
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: 32 }]}>Security</Text>
-          <View style={[styles.card, { backgroundColor: colors.card }]}>
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Old Password</Text>
-              <View style={[styles.inputContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-                <TextInput
-                  style={[styles.input, { color: colors.text }]}
-                  value={oldPassword}
-                  onChangeText={setOldPassword}
-                  secureTextEntry={!showOld}
-                  placeholder="Current password"
-                  placeholderTextColor={colors.textSecondary}
-                />
-                <TouchableOpacity onPress={() => setShowOld(!showOld)}>
-                  <Ionicons name={showOld ? "eye-off-outline" : "eye-outline"} size={20} color={colors.textSecondary} />
-                </TouchableOpacity>
-              </View>
-            </View>
+          <View style={styles.avatarContainer}>
+             <PremiumAvatar size={100} online={true} uri={avatarUrl} name={fullName} />
+             <TouchableOpacity style={styles.changePhotoBtn} onPress={pickImage}>
+                <Text style={styles.changePhotoText}>Change Photo</Text>
+             </TouchableOpacity>
+          </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>New Password</Text>
-              <View style={[styles.inputContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                <Ionicons name="shield-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-                <TextInput
-                  style={[styles.input, { color: colors.text }]}
-                  value={newPassword}
-                  onChangeText={setNewPassword}
-                  secureTextEntry={!showNew}
-                  placeholder="At least 8 characters"
-                  placeholderTextColor={colors.textSecondary}
-                />
-                <TouchableOpacity onPress={() => setShowNew(!showNew)}>
-                  <Ionicons name={showNew ? "eye-off-outline" : "eye-outline"} size={20} color={colors.textSecondary} />
-                </TouchableOpacity>
-              </View>
-            </View>
+          <Text style={styles.sectionTitle}>PERSONAL DETAILS</Text>
+          <PremiumInput 
+            label="Full Name" 
+            value={fullName} 
+            onChangeText={setFullName} 
+            placeholder="John Doe" 
+            icon={<User size={20} color={colors.primary} />}
+          />
+          <PremiumInput 
+            label="Phone Number" 
+            value={phoneNumber} 
+            onChangeText={setPhoneNumber} 
+            placeholder="+233 24 000 0000" 
+            keyboardType="phone-pad"
+            icon={<Phone size={20} color={colors.primary} />}
+          />
 
+          <View style={styles.divider} />
+
+          <Text style={styles.sectionTitle}>SECURITY</Text>
+          <PremiumInput 
+            label="Current Password" 
+            value={oldPassword} 
+            onChangeText={setOldPassword} 
+            secureTextEntry={!showOld}
+            placeholder="••••••••"
+            icon={<Lock size={20} color={colors.primary} />}
+            rightIcon={
+              <TouchableOpacity onPress={() => setShowOld(!showOld)}>
+                {showOld ? <EyeOff size={20} color="#9CA3AF" /> : <Eye size={20} color="#9CA3AF" />}
+              </TouchableOpacity>
+            }
+          />
+          <PremiumInput 
+            label="New Password" 
+            value={newPassword} 
+            onChangeText={setNewPassword} 
+            secureTextEntry={!showNew}
+            placeholder="••••••••"
+            icon={<ShieldCheck size={20} color={colors.primary} />}
+            rightIcon={
+              <TouchableOpacity onPress={() => setShowNew(!showNew)}>
+                {showNew ? <EyeOff size={20} color="#9CA3AF" /> : <Eye size={20} color="#9CA3AF" />}
+              </TouchableOpacity>
+            }
+          />
+
+          {newPassword.length > 0 && (
             <View style={styles.criteriaContainer}>
               {renderCriterion(hasMinLength, "At least 8 characters")}
               {renderCriterion(hasUppercase, "One uppercase letter")}
@@ -229,124 +252,52 @@ export default function EditProfileScreen() {
               {renderCriterion(hasNumber, "One numeric digit")}
               {renderCriterion(hasSpecialChar, "One special character")}
             </View>
+          )}
 
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Confirm New Password</Text>
-              <View style={[styles.inputContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                <Ionicons name="shield-checkmark-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-                <TextInput
-                  style={[styles.input, { color: colors.text }]}
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry={!showConfirm}
-                  placeholder="Repeat new password"
-                  placeholderTextColor={colors.textSecondary}
-                />
-                <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)}>
-                  <Ionicons name={showConfirm ? "eye-off-outline" : "eye-outline"} size={20} color={colors.textSecondary} />
-                </TouchableOpacity>
-              </View>
-            </View>
+          <PremiumInput 
+            label="Confirm New Password" 
+            value={confirmPassword} 
+            onChangeText={setConfirmPassword} 
+            secureTextEntry={!showConfirm}
+            placeholder="••••••••"
+            icon={<ShieldCheck size={20} color={colors.primary} />}
+            rightIcon={
+              <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)}>
+                {showConfirm ? <EyeOff size={20} color="#9CA3AF" /> : <Eye size={20} color="#9CA3AF" />}
+              </TouchableOpacity>
+            }
+          />
 
-            <TouchableOpacity 
-              style={[styles.actionBtn, { backgroundColor: colors.primary, opacity: isPasswordValid ? 1 : 0.6 }]} 
-              onPress={handleChangePassword}
-              disabled={passwordLoading || !isPasswordValid}
-            >
-              {passwordLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.actionBtnText}>Update Password</Text>}
-            </TouchableOpacity>
-          </View>
+          <PremiumButton 
+            title="Update Password" 
+            variant="secondary" 
+            loading={passwordLoading} 
+            onPress={handleChangePassword} 
+            style={{ marginTop: 8 }}
+          />
+
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+
+      <BlurView intensity={100} tint="dark" style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+        <PremiumButton title="Save Profile Changes" loading={loading} onPress={handleUpdateProfile} />
+      </BlurView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  backBtn: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  container: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 12,
-    marginLeft: 4,
-  },
-  card: {
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 15,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    height: 52,
-  },
-  inputIcon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-  },
-  actionBtn: {
-    height: 52,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  actionBtnText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  criteriaContainer: {
-    marginBottom: 20,
-    paddingLeft: 4,
-  },
-  criterionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  criterionText: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
+  container: { flex: 1 },
+  scrollContent: { paddingHorizontal: 24, paddingBottom: 160 },
+  header: { marginBottom: 32 },
+  backBtn: { width: 44, height: 44, borderRadius: 12, backgroundColor: '#111827', justifyContent: 'center', alignItems: 'center', marginBottom: 24, borderWidth: 1, borderColor: '#1F2937' },
+  avatarContainer: { alignItems: 'center', marginBottom: 32 },
+  changePhotoBtn: { marginTop: 12, paddingVertical: 8, paddingHorizontal: 16, backgroundColor: 'rgba(245,158,11,0.1)', borderRadius: 20, borderWidth: 1, borderColor: 'rgba(245,158,11,0.3)' },
+  changePhotoText: { color: '#F59E0B', fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+  sectionTitle: { fontSize: 12, fontFamily: 'Inter_700Bold', color: '#6B7280', letterSpacing: 1.5, marginBottom: 20 },
+  divider: { height: 1, backgroundColor: '#1F2937', marginVertical: 32 },
+  criteriaContainer: { marginBottom: 24, backgroundColor: '#111827', padding: 20, borderRadius: 16, borderWidth: 1, borderColor: '#1F2937' },
+  criterionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 12 },
+  criterionText: { fontSize: 14, fontFamily: 'Inter_400Regular' },
+  bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 24, paddingTop: 20, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' },
 });

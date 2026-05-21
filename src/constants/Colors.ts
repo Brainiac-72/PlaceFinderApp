@@ -1,30 +1,39 @@
 export const Colors = {
   light: {
-    background: '#FAFAFA',
-    card: '#ffffff',
-    text: '#1C1C1E',
-    textSecondary: '#8E8E93',
-    primary: '#007AFF',
-    border: '#E5E5EA',
-    tabBar: '#ffffff',
-    tabBarInactive: '#8E8E93',
-    error: '#FF3B30',
-    success: '#34C759',
-    warning: '#FF9500',
-    badgeText: '#ffffff',
+    background: '#F9FAFB',
+    card: '#FFFFFF',
+    surface: '#F3F4F6',
+    text: '#111827',
+    textSecondary: '#4B5563',
+    textMuted: '#9CA3AF',
+    primary: '#F59E0B', // Gold/Amber
+    accentHover: '#D97706',
+    border: '#E5E7EB',
+    tabBar: '#FFFFFF',
+    tabBarInactive: '#9CA3AF',
+    error: '#EF4444',
+    success: '#10B981',
+    warning: '#F59E0B',
+    badgeText: '#FFFFFF',
+    overlay: 'rgba(255, 255, 255, 0.8)',
   },
   dark: {
-    background: '#000000',
-    card: '#1C1C1E',
-    text: '#F2F2F7',
-    textSecondary: '#AEAEB2',
-    primary: '#0A84FF',
-    border: '#38383A',
-    tabBar: '#1C1C1E',
-    tabBarInactive: '#8E8E93',
-    error: '#FF453A',
-    success: '#32D74B',
-    warning: '#FF9F0A',
-    badgeText: '#ffffff',
+    background: '#0A0F1E', // Deep Navy
+    card: '#111827', // Dark Card
+    surface: '#1F2937', // Elevated Elements
+    text: '#F9FAFB', // Near White
+    textSecondary: '#9CA3AF', // Muted Gray
+    textMuted: '#6B7280', // Very Subtle
+    primary: '#F59E0B', // Gold/Amber
+    accentHover: '#D97706',
+    border: '#374151', // Subtle Dividers
+    tabBar: '#0A0F1E',
+    tabBarInactive: '#6B7280',
+    error: '#EF4444',
+    success: '#10B981',
+    warning: '#F59E0B',
+    badgeText: '#0A0F1E',
+    overlay: 'rgba(10, 15, 30, 0.9)',
   }
 };
+

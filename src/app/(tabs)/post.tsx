@@ -9,6 +9,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
 import Toast from 'react-native-toast-message';
 import { AMENITIES } from '../../constants/Amenities';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 
 const PROPERTY_TYPES = ['Residential', 'Commercial', 'Office', 'Shop', 'Event'];
 
@@ -16,6 +19,7 @@ export default function PostPropertyScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useThemeColor();
   const { user } = useAuth();
+  const router = useRouter();
 
   const [title, setTitle] = useState('');
   const [type, setType] = useState('Residential');
@@ -31,6 +35,7 @@ export default function PostPropertyScreen() {
   const [loading, setLoading] = useState(false);
 
   const pickImage = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
@@ -73,8 +78,16 @@ export default function PostPropertyScreen() {
   };
 
   const handlePost = async () => {
-    if (!title || !price || !location) {
+    if (!title.trim() || !price || !location.trim()) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Toast.show({ type: 'error', text1: 'Missing Fields', text2: 'Please fill in the title, price, and location.' });
+      return;
+    }
+
+    const numericPrice = parseFloat(price);
+    if (isNaN(numericPrice) || numericPrice <= 0) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Toast.show({ type: 'error', text1: 'Invalid Price', text2: 'Please enter a valid price greater than 0.' });
       return;
     }
     
@@ -110,15 +123,17 @@ export default function PostPropertyScreen() {
       amenities: selectedAmenities,
     };
 
-    const { error } = await supabase.from('properties').insert([propertyData]);
+    const { data, error } = await supabase.from('properties').insert([propertyData]).select('id').single();
 
     setLoading(false);
 
     if (error) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Toast.show({ type: 'error', text1: 'Error Posting Property', text2: error.message });
       return;
     }
 
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Toast.show({ type: 'success', text1: 'Success!', text2: 'Property has been posted successfully!' });
     
     // Reset forms
@@ -132,6 +147,10 @@ export default function PostPropertyScreen() {
     setSelectedAmenities([]);
     setImageUri(null);
     setImageBase64(null);
+    
+    if (data?.id) {
+      router.push(`/property/${data.id}`);
+    }
   };
 
   return (
@@ -139,10 +158,11 @@ export default function PostPropertyScreen() {
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <ScrollView 
           showsVerticalScrollIndicator={false} 
-          contentContainerStyle={[styles.container, { paddingTop: Platform.OS === 'android' ? 24 : insets.top }]}
+          contentContainerStyle={[styles.container, { paddingTop: Platform.OS === 'android' ? 24 : insets.top, paddingBottom: 140 }]}
         >
           <View style={styles.header}>
             <Text style={[styles.headerTitle, { color: colors.text }]}>List a Space</Text>
@@ -152,27 +172,28 @@ export default function PostPropertyScreen() {
           <TouchableOpacity 
             style={[
               styles.imageUploadBtn, 
-              { backgroundColor: colors.card, borderColor: colors.border },
-              !imageUri && { borderStyle: 'dashed', borderWidth: 2 }
+              { backgroundColor: isDark ? '#1C1C1E' : '#F2F2F7', borderColor: colors.border },
+              !imageUri && { borderStyle: 'dashed', borderWidth: 1.5 }
             ]}
             onPress={pickImage}
+            activeOpacity={0.8}
           >
             {imageUri ? (
               <Image source={{ uri: imageUri }} style={styles.previewImage} resizeMode="cover" />
             ) : (
               <>
-                <Ionicons name="images-outline" size={32} color={colors.primary} />
-                <Text style={[styles.imageUploadText, { color: colors.primary }]}>Tap to Upload Photos</Text>
+                <Ionicons name="images" size={36} color={colors.primary} />
+                <Text style={[styles.imageUploadText, { color: colors.text }]}>Tap to Upload Photos</Text>
               </>
             )}
           </TouchableOpacity>
 
-          <View style={[styles.formContainer, { backgroundColor: colors.card, shadowColor: isDark ? '#FFF' : '#000' }]}>
+          <View style={styles.formContainer}>
             
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: colors.text }]}>Property Title <Text style={{ color: colors.error }}>*</Text></Text>
               <TextInput
-                style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: isDark ? '#38383A' : '#E5E5EA' }]}
                 placeholder="e.g. Modern 2-Bedroom Apartment"
                 placeholderTextColor={colors.textSecondary}
                 value={title}
@@ -188,10 +209,14 @@ export default function PostPropertyScreen() {
                     key={t}
                     style={[
                       styles.typePill, 
-                      { backgroundColor: colors.background, borderColor: colors.border },
+                      { backgroundColor: colors.card, borderColor: isDark ? '#38383A' : '#E5E5EA' },
                       type === t && { backgroundColor: colors.primary, borderColor: colors.primary }
                     ]}
-                    onPress={() => setType(t)}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setType(t);
+                    }}
+                    activeOpacity={0.8}
                   >
                     <Text style={[
                       styles.typeText,
@@ -207,7 +232,7 @@ export default function PostPropertyScreen() {
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={[styles.label, { color: colors.text }]}>Price (GHS) <Text style={{ color: colors.error }}>*</Text></Text>
                 <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                  style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: isDark ? '#38383A' : '#E5E5EA' }]}
                   placeholder="0.00"
                   placeholderTextColor={colors.textSecondary}
                   keyboardType="numeric"
@@ -216,9 +241,9 @@ export default function PostPropertyScreen() {
                 />
               </View>
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={[styles.label, { color: colors.text }]}>Area Size (sqm)</Text>
+                <Text style={[styles.label, { color: colors.text }]}>Area Size (m²)</Text>
                 <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                  style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: isDark ? '#38383A' : '#E5E5EA' }]}
                   placeholder="e.g. 120"
                   placeholderTextColor={colors.textSecondary}
                   keyboardType="numeric"
@@ -231,7 +256,7 @@ export default function PostPropertyScreen() {
             <View style={styles.inputGroup}>
               <Text style={[styles.label, { color: colors.text }]}>Location <Text style={{ color: colors.error }}>*</Text></Text>
               <TextInput
-                style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: isDark ? '#38383A' : '#E5E5EA' }]}
                 placeholder="e.g. East Legon, Accra"
                 placeholderTextColor={colors.textSecondary}
                 value={location}
@@ -243,7 +268,7 @@ export default function PostPropertyScreen() {
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={[styles.label, { color: colors.text }]}>Bedrooms</Text>
                 <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                  style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: isDark ? '#38383A' : '#E5E5EA' }]}
                   placeholder="e.g. 2"
                   placeholderTextColor={colors.textSecondary}
                   keyboardType="numeric"
@@ -254,7 +279,7 @@ export default function PostPropertyScreen() {
               <View style={[styles.inputGroup, { flex: 1 }]}>
                 <Text style={[styles.label, { color: colors.text }]}>Bathrooms</Text>
                 <TextInput
-                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                  style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: isDark ? '#38383A' : '#E5E5EA' }]}
                   placeholder="e.g. 2"
                   placeholderTextColor={colors.textSecondary}
                   keyboardType="numeric"
@@ -270,7 +295,7 @@ export default function PostPropertyScreen() {
                 style={[
                   styles.input, 
                   styles.textArea,
-                  { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }
+                  { backgroundColor: colors.card, color: colors.text, borderColor: isDark ? '#38383A' : '#E5E5EA' }
                 ]}
                 placeholder="Describe your property in detail..."
                 placeholderTextColor={colors.textSecondary}
@@ -293,10 +318,11 @@ export default function PostPropertyScreen() {
                       key={amenity.id}
                       style={[
                         styles.amenityChip,
-                        { borderColor: colors.border, backgroundColor: colors.background },
+                        { borderColor: isDark ? '#38383A' : '#E5E5EA', backgroundColor: colors.card },
                         isSelected && { backgroundColor: colors.primary, borderColor: colors.primary }
                       ]}
                       onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         if (isSelected) {
                           setSelectedAmenities(prev => prev.filter(id => id !== amenity.id));
                         } else {
@@ -322,17 +348,29 @@ export default function PostPropertyScreen() {
               </View>
             </View>
 
-            <TouchableOpacity style={[styles.submitBtn, { backgroundColor: colors.primary }]} onPress={handlePost} disabled={loading}>
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.submitBtnText}>Post Property</Text>
-              )}
-            </TouchableOpacity>
-
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Floating Bottom Action */}
+      <BlurView 
+        tint={isDark ? "dark" : "light"} 
+        intensity={90} 
+        style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 100) }]}
+      >
+        <TouchableOpacity 
+          style={[styles.submitBtn, { backgroundColor: colors.primary }]} 
+          activeOpacity={0.8}
+          onPress={handlePost} 
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.submitBtnText}>Publish Listing</Text>
+          )}
+        </TouchableOpacity>
+      </BlurView>
     </SafeAreaView>
   );
 }
@@ -342,27 +380,29 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
     paddingBottom: 40,
   },
   header: {
-    marginBottom: 20,
-    marginTop: 8,
+    marginBottom: 24,
+    marginTop: 16,
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 32,
+    fontFamily: 'Outfit_800ExtraBold',
     marginBottom: 4,
+    letterSpacing: -0.5,
   },
   headerSub: {
-    fontSize: 16,
+    fontSize: 15,
+    fontFamily: 'Outfit_400Regular',
   },
   imageUploadBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: 160,
-    borderRadius: 16,
-    marginBottom: 24,
+    height: 180,
+    borderRadius: 24,
+    marginBottom: 32,
     gap: 8,
     overflow: 'hidden',
   },
@@ -372,64 +412,80 @@ const styles = StyleSheet.create({
   },
   imageUploadText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Outfit_700Bold',
   },
   formContainer: {
-    borderRadius: 20,
-    padding: 20,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
+    // Removed external background to make it look cleaner
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   inputRow: {
     flexDirection: 'row',
     gap: 16,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontFamily: 'Outfit_700Bold',
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 15,
+    borderRadius: 16,
+    padding: 16,
+    fontSize: 16,
+    fontFamily: 'Outfit_500Medium',
   },
   textArea: {
-    minHeight: 100,
+    minHeight: 120,
+    paddingTop: 16,
   },
   typeScroll: {
     flexGrow: 0,
+    marginHorizontal: -24,
+    paddingHorizontal: 24,
   },
   typePill: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 24,
     borderWidth: 1,
     marginRight: 10,
   },
   typeText: {
-    fontWeight: '500',
+    fontSize: 14,
+    fontFamily: 'Outfit_600SemiBold',
+  },
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
   },
   submitBtn: {
-    padding: 16,
-    borderRadius: 12,
+    paddingVertical: 18,
+    borderRadius: 30,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 6,
   },
   submitBtnText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 18,
+    fontFamily: 'Outfit_700Bold',
   },
   inputSubtitle: {
-    fontSize: 12,
-    marginTop: -8,
+    fontSize: 13,
+    fontFamily: 'Outfit_400Regular',
+    marginTop: -4,
     marginBottom: 12,
   },
   amenitiesContainer: {
@@ -440,14 +496,14 @@ const styles = StyleSheet.create({
   amenityChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: 20,
     borderWidth: 1,
     gap: 6,
   },
   amenityChipText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Outfit_600SemiBold',
   },
 });

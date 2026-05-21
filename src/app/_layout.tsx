@@ -1,4 +1,5 @@
 import { Slot, useRouter, useSegments } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
@@ -11,6 +12,12 @@ import { AnimatedSplashScreen } from '../components/AnimatedSplashScreen';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { propertyService } from '../services/propertyService';
+
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { useFonts, Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold, Outfit_800ExtraBold } from '@expo-google-fonts/outfit';
+import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
+import { PlayfairDisplay_700Bold, PlayfairDisplay_900Black, PlayfairDisplay_400Regular } from '@expo-google-fonts/playfair-display';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,11 +38,26 @@ function RootLayoutNav() {
   const [appIsReady, setAppIsReady] = useState(false);
 
   // 1. Initial Readiness Check
+  const [fontsLoaded, fontError] = useFonts({
+    Outfit_400Regular,
+    Outfit_500Medium,
+    Outfit_600SemiBold,
+    Outfit_700Bold,
+    Outfit_800ExtraBold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    PlayfairDisplay_700Bold,
+    PlayfairDisplay_900Black,
+    PlayfairDisplay_400Regular,
+  });
+
   useEffect(() => {
-    if (!authLoading && hasHydrated) {
+    if (!authLoading && hasHydrated && (fontsLoaded || fontError)) {
       setAppIsReady(true);
     }
-  }, [authLoading, hasHydrated]);
+  }, [authLoading, hasHydrated, fontsLoaded, fontError]);
 
   // 2. Pre-fetching & Performance
   useEffect(() => {
@@ -93,32 +115,34 @@ const toastConfig = {
   success: (props: any) => (
     <BaseToast
       {...props}
-      style={{ borderLeftColor: '#007AFF', backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: 16, shadowOpacity: 0.1, elevation: 6 }}
+      style={{ borderLeftColor: '#F59E0B', backgroundColor: '#111827', borderRadius: 12, shadowOpacity: 0.3, elevation: 6 }}
       contentContainerStyle={{ paddingHorizontal: 15 }}
       text1Style={{
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#1C1C1E'
+        fontSize: 15,
+        fontFamily: 'Inter_700Bold',
+        color: '#F9FAFB'
       }}
       text2Style={{
-        fontSize: 14,
-        color: '#8E8E93'
+        fontSize: 13,
+        fontFamily: 'Inter_400Regular',
+        color: '#9CA3AF'
       }}
     />
   ),
   error: (props: any) => (
     <ErrorToast
       {...props}
-      style={{ borderLeftColor: '#FF3B30', backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: 16, shadowOpacity: 0.1, elevation: 6 }}
+      style={{ borderLeftColor: '#EF4444', backgroundColor: '#111827', borderRadius: 12, shadowOpacity: 0.3, elevation: 6 }}
       contentContainerStyle={{ paddingHorizontal: 15 }}
       text1Style={{
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#1C1C1E'
+        fontSize: 15,
+        fontFamily: 'Inter_700Bold',
+        color: '#F9FAFB'
       }}
       text2Style={{
-        fontSize: 14,
-        color: '#FF3B30'
+        fontSize: 13,
+        fontFamily: 'Inter_400Regular',
+        color: '#EF4444'
       }}
     />
   ),
@@ -131,10 +155,10 @@ export default function RootLayout() {
     ...DarkTheme,
     colors: {
       ...DarkTheme.colors,
-      background: colors.background,
-      card: colors.card,
-      text: colors.text,
-      border: colors.border,
+      background: '#0A0F1E',
+      card: '#111827',
+      text: '#F9FAFB',
+      border: '#374151',
     }
   };
 
@@ -142,23 +166,29 @@ export default function RootLayout() {
     ...DefaultTheme,
     colors: {
       ...DefaultTheme.colors,
-      background: colors.background,
-      card: colors.card,
-      text: colors.text,
-      border: colors.border,
+      background: '#F9FAFB',
+      card: '#FFFFFF',
+      text: '#111827',
+      border: '#E5E7EB',
     }
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider value={isDark ? customDarkTheme : customLightTheme}>
-        <AuthProvider>
-          <AlertProvider>
-            <RootLayoutNav />
-            <Toast config={toastConfig} />
-          </AlertProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider value={isDark ? customDarkTheme : customLightTheme}>
+          <BottomSheetModalProvider>
+            <AuthProvider>
+              <AlertProvider>
+                <RootLayoutNav />
+                <Toast config={toastConfig} />
+                <StatusBar style={isDark ? 'light' : 'dark'} />
+              </AlertProvider>
+            </AuthProvider>
+          </BottomSheetModalProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
+

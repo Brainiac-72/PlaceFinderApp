@@ -1,13 +1,15 @@
 import React, { memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { MapPin, Star } from 'lucide-react-native';
 import { useThemeColor } from '../hooks/useThemeColor';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
+import * as Haptics from 'expo-haptics';
 import { Property } from '../utils/propertyUtils';
+import { PremiumBadge } from './premium/PremiumBadge';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.82;
+const CARD_WIDTH = width - 48;
 
 interface SpotlightCardProps {
   property: Property;
@@ -20,8 +22,11 @@ const SpotlightCard = ({ property, onPress }: SpotlightCardProps) => {
   return (
     <TouchableOpacity 
       activeOpacity={0.9} 
-      onPress={onPress}
-      style={[styles.container, { backgroundColor: colors.card }]}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        onPress();
+      }}
+      style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
     >
       <Image 
         source={{ uri: property.imageUrl }} 
@@ -30,15 +35,15 @@ const SpotlightCard = ({ property, onPress }: SpotlightCardProps) => {
         transition={300}
       />
       
-      {/* Premium Badge */}
-      <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-        <Ionicons name="sparkles" size={12} color="#fff" style={{ marginRight: 4 }} />
-        <Text style={styles.badgeText}>FEATURED</Text>
+      <View style={styles.badgeContainer}>
+        <View style={styles.premiumBadge}>
+          <Star size={12} color="#F59E0B" fill="#F59E0B" />
+          <Text style={styles.premiumText}>SPOTLIGHT</Text>
+        </View>
       </View>
 
-      {/* Info Overlay */}
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.8)']}
+        colors={['transparent', 'rgba(10,15,30,0.95)']}
         style={styles.gradient}
       >
         <View style={styles.infoContainer}>
@@ -46,12 +51,12 @@ const SpotlightCard = ({ property, onPress }: SpotlightCardProps) => {
           
           <View style={styles.bottomRow}>
             <View style={styles.locationRow}>
-              <Ionicons name="location-sharp" size={14} color="#EBEBF5" />
+              <MapPin size={16} color="#F59E0B" />
               <Text style={styles.locationText} numberOfLines={1}>{property.location}</Text>
             </View>
-            <View style={styles.priceContainer}>
+            <View style={[styles.priceTag, { backgroundColor: '#F59E0B' }]}>
                 <Text style={styles.priceText}>
-                    {property.currency} {property.price.toLocaleString()}
+                    {property.currency}{property.price.toLocaleString()}
                 </Text>
             </View>
           </View>
@@ -64,36 +69,44 @@ const SpotlightCard = ({ property, onPress }: SpotlightCardProps) => {
 const styles = StyleSheet.create({
   container: {
     width: CARD_WIDTH,
-    height: 220,
+    height: 380,
     borderRadius: 24,
     marginRight: 16,
     overflow: 'hidden',
+    borderWidth: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 10,
   },
   image: {
     width: '100%',
     height: '100%',
   },
-  badge: {
+  badgeContainer: {
     position: 'absolute',
-    top: 16,
-    left: 16,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
+    top: 20,
+    left: 20,
     zIndex: 2,
   },
-  badgeText: {
-    color: '#fff',
+  premiumBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(10,15,30,0.8)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.3)',
+    gap: 6,
+  },
+  premiumText: {
+    color: '#F59E0B',
     fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1,
+    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
+    letterSpacing: 1.5,
   },
   gradient: {
     position: 'absolute',
@@ -102,15 +115,15 @@ const styles = StyleSheet.create({
     right: 0,
     height: '60%',
     justifyContent: 'flex-end',
-    padding: 20,
+    padding: 24,
   },
   infoContainer: {
-    gap: 4,
+    gap: 12,
   },
   title: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '800',
+    color: '#F9FAFB',
+    fontSize: 28,
+    fontFamily: 'PlayfairDisplay_700Bold',
     letterSpacing: -0.5,
   },
   bottomRow: {
@@ -121,25 +134,23 @@ const styles = StyleSheet.create({
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
     flex: 1,
   },
   locationText: {
-    color: '#EBEBF5',
-    fontSize: 13,
-    fontWeight: '500',
+    color: '#9CA3AF',
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
   },
-  priceContainer: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+  priceTag: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
   },
   priceText: {
-    color: '#fff',
-    fontSize: 15,
+    color: '#0A0F1E',
+    fontSize: 16,
+    fontFamily: 'Inter_700Bold',
     fontWeight: '700',
   },
 });

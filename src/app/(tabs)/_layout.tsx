@@ -1,53 +1,56 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { useAuth } from '../../providers/AuthProvider';
-import { supabase } from '../../utils/supabase';
-import { TouchableOpacity, Text, Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import { Platform, StyleSheet, View } from 'react-native';
+import { Compass, Bookmark, Plus, MessageCircle, UserCircle } from 'lucide-react-native';
 import { useThemeColor } from '../../hooks/useThemeColor';
 
-const PRIMARY_COLOR = '#007AFF'; // Trust Blue
-
 export default function TabLayout() {
-  const { session, profile } = useAuth();
   const { colors, isDark } = useThemeColor();
   
   return (
     <Tabs 
       screenOptions={{ 
-        headerShown: true,
+        headerShown: false,
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-        headerStyle: {
-          backgroundColor: colors.background,
-          borderBottomWidth: 0,
-          elevation: 0,
-          shadowOpacity: 0,
-        },
-        headerTintColor: colors.text,
+        tabBarInactiveTintColor: colors.tabBarInactive,
+        tabBarShowLabel: false,
+        tabBarBackground: () => (
+          <View style={[StyleSheet.absoluteFill, { borderRadius: 0, overflow: 'hidden' }]}>
+            <BlurView tint={isDark ? "dark" : "light"} intensity={100} style={StyleSheet.absoluteFill} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay, borderTopWidth: 1, borderTopColor: 'rgba(245, 158, 11, 0.15)' }]} />
+          </View>
+        ),
         tabBarStyle: {
-          backgroundColor: colors.tabBar,
-          borderTopColor: colors.border,
-          height: Platform.OS === 'ios' ? 88 : 68,
-          paddingTop: 8,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 12,
-          borderTopWidth: 1,
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          elevation: 20,
+          backgroundColor: 'transparent',
+          height: Platform.OS === 'ios' ? 90 : 70,
+          borderRadius: 0,
+          borderTopWidth: 0,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 12,
         },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '700',
-          textTransform: 'uppercase',
-          letterSpacing: 0.5,
-        }
+        tabBarItemStyle: {
+          height: 70,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
       }}
     >
       <Tabs.Screen 
         name="index" 
         options={{ 
-          title: 'Explore',
-          headerShown: false,
+          title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "compass" : "compass-outline"} size={26} color={color} />
+            <View style={[styles.iconContainer, focused && { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
+              <Compass size={24} color={color} strokeWidth={focused ? 2.5 : 2} />
+            </View>
           )
         }} 
       />
@@ -56,7 +59,9 @@ export default function TabLayout() {
         options={{ 
           title: 'Saved',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "heart" : "heart-outline"} size={26} color={color} />
+            <View style={[styles.iconContainer, focused && { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
+              <Bookmark size={24} color={color} strokeWidth={focused ? 2.5 : 2} fill={focused ? '#F59E0B' : 'transparent'} />
+            </View>
           )
         }} 
       />
@@ -64,9 +69,29 @@ export default function TabLayout() {
         name="post" 
         options={{ 
           title: 'Post',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "add-circle" : "add-circle-outline"} size={28} color={color} />
+          tabBarIcon: ({ focused }) => (
+            <View style={styles.postButton}>
+              <Plus size={32} color={colors.badgeText} strokeWidth={3} />
+            </View>
           )
+        }} 
+      />
+      <Tabs.Screen 
+        name="inbox" 
+        options={{ 
+          title: 'Inbox',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconContainer, focused && { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
+              <MessageCircle size={24} color={color} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          )
+        }} 
+      />
+      <Tabs.Screen 
+        name="notifications" 
+        options={{ 
+          title: 'Updates',
+          href: null,
         }} 
       />
       <Tabs.Screen 
@@ -74,10 +99,37 @@ export default function TabLayout() {
         options={{ 
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "person" : "person-outline"} size={26} color={color} />
+            <View style={[styles.iconContainer, focused && { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
+              <UserCircle size={24} color={color} strokeWidth={focused ? 2.5 : 2} />
+            </View>
           )
         }} 
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  postButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#F59E0B',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+    marginTop: -10,
+  }
+});
+

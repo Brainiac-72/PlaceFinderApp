@@ -48,7 +48,13 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onSuccess, o
         const { url } = res;
         const params = Linking.parse(url).queryParams;
         
-        if (params?.access_token && params?.refresh_token) {
+        if (params?.code) {
+          // Handle PKCE flow (default in newer Supabase versions)
+          const { error: sessionError } = await supabase.auth.exchangeCodeForSession(params.code as string);
+          if (sessionError) throw sessionError;
+          onSuccess?.();
+        } else if (params?.access_token && params?.refresh_token) {
+          // Handle Implicit flow
           const { error: sessionError } = await supabase.auth.setSession({
             access_token: params.access_token as string,
             refresh_token: params.refresh_token as string,
@@ -57,7 +63,7 @@ export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onSuccess, o
           if (sessionError) throw sessionError;
           onSuccess?.();
         } else {
-          throw new Error('Authentication failed: Missing tokens in redirect URL.');
+          throw new Error('Authentication failed: Missing tokens or code in redirect URL.');
         }
       }
     } catch (error: any) {
@@ -116,6 +122,7 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: 'Outfit_600SemiBold',
     letterSpacing: 0.2,
   },
 });

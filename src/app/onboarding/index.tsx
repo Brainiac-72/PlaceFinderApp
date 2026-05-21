@@ -188,6 +188,7 @@ const styles = StyleSheet.create({
   title: {
     fontWeight: '800',
     fontSize: 32,
+    fontFamily: 'Outfit_800ExtraBold',
     marginBottom: 16,
     textAlign: 'center',
     letterSpacing: -1,
@@ -195,6 +196,7 @@ const styles = StyleSheet.create({
   description: {
     fontWeight: '400',
     fontSize: 16,
+    fontFamily: 'Outfit_400Regular',
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -222,10 +224,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
   },
   buttonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: '800',
+    fontFamily: 'Outfit_800ExtraBold',
   },
 });

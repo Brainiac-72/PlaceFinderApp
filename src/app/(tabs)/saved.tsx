@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, StatusBar, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Platform } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Heart, Compass, Search } from 'lucide-react-native';
 import { useSavedStore } from '../../store/useSavedStore';
 import { DUMMY_PROPERTIES } from '../../data/dummyProperties';
 import PropertyCard from '../../components/PropertyCard';
@@ -10,11 +10,15 @@ import { useThemeColor } from '../../hooks/useThemeColor';
 import { supabase } from '../../utils/supabase';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { FlashList } from '@shopify/flash-list';
+import * as Haptics from 'expo-haptics';
+import { SectionHeader } from '../../components/premium/SectionHeader';
+import { PremiumButton } from '../../components/premium/PremiumButton';
 
 export default function SavedScreen() {
   const savedIds = useSavedStore(state => state.savedIds);
   const router = useRouter();
-  const { colors, isDark } = useThemeColor();
+  const { colors } = useThemeColor();
   const insets = useSafeAreaInsets();
   const [savedProperties, setSavedProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,15 +31,8 @@ export default function SavedScreen() {
     }
 
     setLoading(true);
-    
-    // 1. Get Matching Dummy Properties
     const matchingDummies = DUMMY_PROPERTIES.filter(p => savedIds.includes(p.id));
-
-    // 2. Fetch Matching Supabase Properties
-    const { data, error } = await supabase
-      .from('properties')
-      .select('*')
-      .in('id', savedIds);
+    const { data, error } = await supabase.from('properties').select('*').in('id', savedIds);
 
     let supabaseProps: any[] = [];
     if (!error && data) {
@@ -55,7 +52,6 @@ export default function SavedScreen() {
       }));
     }
 
-    // 3. Merge and set
     setSavedProperties([...matchingDummies, ...supabaseProps]);
     setLoading(false);
   }, [savedIds]);
@@ -66,42 +62,46 @@ export default function SavedScreen() {
     }, [fetchSavedProperties])
   );
 
-  // No change here, just placeholder for alignment
-
-  if (savedProperties.length === 0) {
+  if (savedProperties.length === 0 && !loading) {
     return (
-      <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
-        <View style={[styles.iconCircle, { backgroundColor: colors.card }]}>
-          <Ionicons name="heart-dislike-outline" size={48} color={colors.textSecondary} />
+      <View style={[styles.emptyContainer, { backgroundColor: '#0A0F1E' }]}>
+        <View style={styles.emptyIconCircle}>
+          <Heart size={48} color="#F59E0B" fill="rgba(245, 158, 11, 0.1)" strokeWidth={1.5} />
         </View>
-        <Text style={[styles.emptyTitle, { color: colors.text }]}>No Saved Spaces</Text>
-        <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-          You haven't bookmarked any properties yet. Explore our listings and tap the heart icon to save them here.
+        <Text style={styles.emptyTitle}>Curate Your Collection</Text>
+        <Text style={styles.emptySubtitle}>
+          Save properties you love to compare them later or share them with friends.
         </Text>
-        <TouchableOpacity style={[styles.exploreBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]} onPress={() => router.push('/(tabs)')}>
-          <Text style={styles.exploreBtnText}>Go Explore</Text>
-        </TouchableOpacity>
+        <PremiumButton 
+          title="Explore Spaces" 
+          onPress={() => router.push('/(tabs)')} 
+          icon={<Compass size={20} color="#0A0F1E" />}
+          style={{ width: '100%', marginTop: 12 }}
+        />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : insets.top }]}>
+    <View style={[styles.container, { backgroundColor: '#0A0F1E', paddingTop: insets.top }]}>
+      <StatusBar barStyle="light-content" />
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Saved Spaces</Text>
-        <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>{savedIds.length} properties bookmarked</Text>
+        <SectionHeader 
+          title="Saved Collection" 
+          subtitle={`${savedIds.length} properties in your luxury collection`} 
+        />
       </View>
 
-      <FlatList
-        data={loading ? [1, 2, 3] : savedProperties}
-        keyExtractor={(item, index) => loading ? `skele-${index}` : item.id}
+      <FlashList
+        data={loading ? [1, 2, 3, 4] : savedProperties}
+        keyExtractor={(item, index) => typeof item === 'number' ? `skele-${index}` : item.id}
         renderItem={({ item, index }) => 
-          loading ? (
-            <View style={{ paddingHorizontal: 16 }}>
+          typeof item === 'number' ? (
+            <View style={{ paddingHorizontal: 24, paddingBottom: 24 }}>
               <PropertyCardSkeleton />
             </View>
           ) : (
-            <Animated.View entering={FadeInDown.delay(index * 100).duration(400)}>
+            <Animated.View entering={FadeInDown.delay(index * 100).duration(400)} style={{ paddingHorizontal: 24 }}>
               <PropertyCard 
                 property={item} 
                 onPress={() => router.push(`/property/${item.id}`)} 
@@ -109,7 +109,7 @@ export default function SavedScreen() {
             </Animated.View>
           )
         }
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingTop: 16, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       />
     </View>
@@ -117,67 +117,10 @@ export default function SavedScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  headerSubtitle: {
-    fontSize: 15,
-    fontWeight: '500',
-    marginTop: 2,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-    backgroundColor: '#FAFAFA',
-  },
-  iconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#F2F2F7',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  emptyTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1C1C1E',
-    marginBottom: 8,
-  },
-  emptySubtitle: {
-    fontSize: 15,
-    color: '#8E8E93',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 32,
-  },
-  exploreBtn: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  exploreBtnText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  container: { flex: 1 },
+  header: { paddingHorizontal: 24, paddingTop: 20 },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
+  emptyIconCircle: { width: 120, height: 120, borderRadius: 60, backgroundColor: '#111827', justifyContent: 'center', alignItems: 'center', marginBottom: 32, borderWidth: 1, borderColor: '#1F2937' },
+  emptyTitle: { fontSize: 24, fontFamily: 'PlayfairDisplay_700Bold', color: '#F9FAFB', marginBottom: 16, textAlign: 'center' },
+  emptySubtitle: { fontSize: 16, fontFamily: 'Inter_400Regular', color: '#9CA3AF', textAlign: 'center', lineHeight: 26, marginBottom: 40 },
 });

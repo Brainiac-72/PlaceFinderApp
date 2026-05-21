@@ -183,27 +183,31 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 36,
     fontWeight: '800',
+    fontFamily: 'Outfit_800ExtraBold',
     color: '#fff',
-    letterSpacing: 1,
+    letterSpacing: -0.5,
     marginBottom: 8,
   },
   tagline: {
     fontSize: 16,
     color: 'rgba(255,255,255,0.8)',
     fontWeight: '500',
+    fontFamily: 'Outfit_500Medium',
   },
   glassCard: {
-    borderRadius: 24,
+    borderRadius: 32,
     padding: 32,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.15)',
   },
   loginTitle: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: 26,
+    fontWeight: '800',
+    fontFamily: 'Outfit_800ExtraBold',
     marginBottom: 24,
     textAlign: 'center',
+    letterSpacing: -0.5,
   },
   inputContainer: {
     gap: 16,
@@ -225,6 +229,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '500',
+    fontFamily: 'Outfit_500Medium',
     height: '100%',
   },
   eyeIcon: {
@@ -234,10 +239,10 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 16,
     overflow: 'hidden',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 4,
   },
   gradientButton: {
     flex: 1,
@@ -249,7 +254,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '700',
-    letterSpacing: 0.5,
+    fontFamily: 'Outfit_700Bold',
   },
   footerRow: {
     flexDirection: 'row',
@@ -259,10 +264,12 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 15,
+    fontFamily: 'Outfit_400Regular',
   },
   registerLink: {
     fontSize: 15,
     fontWeight: '700',
+    fontFamily: 'Outfit_700Bold',
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -275,8 +282,9 @@ const styles = StyleSheet.create({
   },
   dividerText: {
     marginHorizontal: 16,
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: 'Outfit_700Bold',
     letterSpacing: 1,
   },
 });
