@@ -4,6 +4,11 @@ import { type ComponentProps } from 'react';
 
 type Props = Omit<ComponentProps<typeof Link>, 'href'> & { href: Href & string };
 
+/**
+ * A drop-in replacement for `Link` that ensures external URLs are opened correctly.
+ * On native apps, it forces the URL to open in an in-app browser instead of kicking 
+ * the user out to Safari/Chrome. On web, it opens in a new tab normally.
+ */
 export function ExternalLink({ href, ...rest }: Props) {
   return (
     <Link

@@ -16,6 +16,11 @@ import { PremiumAvatar } from '../../components/premium/PremiumAvatar';
 import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
 
+/**
+ * The Edit Profile Screen.
+ * Allows users to update their personal details (name, phone, avatar) and change their password.
+ * Interfaces heavily with Supabase Auth and Storage APIs.
+ */
 export default function EditProfileScreen() {
   const { user, profile, refreshProfile } = useAuth();
   const { colors } = useThemeColor();
@@ -179,12 +184,12 @@ export default function EditProfileScreen() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: '#0A0F1E', paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: '#0A0F1E', paddingTop: insets.top + (Platform.OS === 'android' ? 15 : 0) }]}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <TouchableOpacity onPress={() => router.navigate('/profile')} style={styles.backBtn}>
               <ChevronLeft size={24} color="#FFF" />
             </TouchableOpacity>
             <SectionHeader title="Settings" subtitle="Manage your account & security" />

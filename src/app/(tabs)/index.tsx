@@ -22,6 +22,11 @@ import { PremiumButton } from '../../components/premium/PremiumButton';
 const CATEGORIES = ['All', 'Residential', 'Commercial', 'Shop', 'Office'];
 const { width } = Dimensions.get('window');
 
+/**
+ * The main Home Dashboard (Feed) screen.
+ * Displays horizontal 'Spotlight' properties and a vertical list of all properties.
+ * Handles advanced search and filtering via a BottomSheet modal.
+ */
 export default function HomeDashboard() {
   const { user, profile } = useAuth();
   const [activeCategory, setActiveCategory] = useState('All');
@@ -72,7 +77,7 @@ export default function HomeDashboard() {
   } = useQuery({
     queryKey: ['my-properties', user?.id],
     queryFn: () => propertyService.getMyProperties(user!.id),
-    enabled: !!user && profile?.role === 'owner',
+    enabled: !!user && profile?.role === 'landlord',
   });
 
   // 3. Fetch Unread Notifications Count
@@ -83,7 +88,7 @@ export default function HomeDashboard() {
     refetchInterval: 1000 * 60 * 2,
   });
 
-  const loading = isLoadingAll || (profile?.role === 'owner' && isLoadingMy && myProperties.length === 0);
+  const loading = isLoadingAll || (profile?.role === 'landlord' && isLoadingMy && myProperties.length === 0);
 
   const onRefresh = useCallback(async () => {
     await Promise.all([refetchAll(), refetchMy()]);
@@ -244,7 +249,7 @@ export default function HomeDashboard() {
         renderItem={renderItem}
         contentContainerStyle={{
           ...styles.listContent,
-          paddingTop: insets.top + 12,
+          paddingTop: insets.top + (Platform.OS === 'android' ? 27 : 12),
           paddingBottom: insets.bottom + 120
         }}
         ListHeaderComponent={renderHeader}

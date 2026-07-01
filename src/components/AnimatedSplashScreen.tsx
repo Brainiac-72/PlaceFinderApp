@@ -16,6 +16,11 @@ interface AnimatedSplashScreenProps {
   isAppReady: boolean;
 }
 
+/**
+ * A custom splash screen component that replaces the native splash screen smoothly.
+ * It animates an infinite pulsing logo until the app finishes loading (`isAppReady`),
+ * and then plays an exit animation before unmounting.
+ */
 export function AnimatedSplashScreen({ isAppReady }: AnimatedSplashScreenProps) {
   const [isAnimationComplete, setIsAnimationComplete] = useState(false);
   const opacity = useSharedValue(1);

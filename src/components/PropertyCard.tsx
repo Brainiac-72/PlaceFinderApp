@@ -19,6 +19,11 @@ type Props = {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+/**
+ * The standard card component for displaying a property listing.
+ * Includes property images, prices, badges, and quick stats (beds, baths).
+ * Highly interactive with haptic feedback and save/favorite toggles.
+ */
 const PropertyCard = ({ property, onPress, compact, gridMode }: Props) => {
   const isSaved = useSavedStore(state => state.isSaved(property.id));
   const toggleSaved = useSavedStore(state => state.toggleSaved);

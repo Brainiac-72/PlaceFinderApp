@@ -1,3 +1,7 @@
+/**
+ * Deprecated or fallback interface representing a Property object for dummy data.
+ * NOTE: The main Property interface is typically imported from `utils/propertyUtils.ts`.
+ */
 export type Property = {
   id: string;
   title: string;
@@ -11,10 +15,14 @@ export type Property = {
   imageUrl: string;
   status: 'Available' | 'Taken';
   description?: string;
-  ownerContact?: string;
+  landlordContact?: string;
   amenities?: string[];
 };
 
+/**
+ * Hardcoded list of properties used for UI testing, development, and as fallback
+ * when the actual database is empty or unavailable.
+ */
 export const DUMMY_PROPERTIES: Property[] = [
   {
     id: '1',
@@ -29,7 +37,7 @@ export const DUMMY_PROPERTIES: Property[] = [
     imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=800&auto=format&fit=crop',
     status: 'Available',
     description: 'A beautiful and spacious modern 2-bedroom apartment located in the heart of East Legon. Features en-suite bathrooms, a fully fitted kitchen, and 24/7 security.',
-    ownerContact: '0541217931',
+    landlordContact: '0541217931',
     amenities: ['wifi', 'ac', 'security', 'parking', 'pool'],
   },
   {
@@ -43,7 +51,7 @@ export const DUMMY_PROPERTIES: Property[] = [
     imageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=800&auto=format&fit=crop',
     status: 'Available',
     description: 'High foot-traffic retail space perfect for boutiques or fast food joints. Located directly on Oxford Street.',
-    ownerContact: '0559962434',
+    landlordContact: '0559962434',
     amenities: ['security', 'water', 'power'],
   },
   {
@@ -58,7 +66,7 @@ export const DUMMY_PROPERTIES: Property[] = [
     imageUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=800&auto=format&fit=crop',
     status: 'Available',
     description: 'Premium executive office space available fully furnished with ergonomic chairs, high-speed internet ports, and a shared conference room.',
-    ownerContact: '0541217931',
+    landlordContact: '0541217931',
   },
   {
     id: '4',
@@ -73,7 +81,7 @@ export const DUMMY_PROPERTIES: Property[] = [
     imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=800&auto=format&fit=crop',
     status: 'Taken',
     description: 'Compact, affordable studio apartment ideal for students or young professionals. Very serene environment.',
-    ownerContact: '0559962434',
+    landlordContact: '0559962434',
   },
   {
     id: '5',
@@ -86,7 +94,7 @@ export const DUMMY_PROPERTIES: Property[] = [
     imageUrl: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?q=80&w=800&auto=format&fit=crop',
     status: 'Available',
     description: 'Massive open ground with paved parking. Perfect for weddings, corporate retreats, and large outdoor gatherings.',
-    ownerContact: '0541217931',
+    landlordContact: '0541217931',
   },
   {
     id: '6',
@@ -101,7 +109,7 @@ export const DUMMY_PROPERTIES: Property[] = [
     imageUrl: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=800&auto=format&fit=crop',
     status: 'Available',
     description: 'Ultra-luxurious villa in a gated community. Features a private swimming pool, smart home integration, and sprawling gardens.',
-    ownerContact: '0559962434',
+    landlordContact: '0559962434',
   },
   {
     id: '7',
@@ -114,7 +122,7 @@ export const DUMMY_PROPERTIES: Property[] = [
     imageUrl: 'https://images.unsplash.com/photo-1587293852726-70cdb56c2866?q=80&w=800&auto=format&fit=crop',
     status: 'Available',
     description: 'Large industrial warehouse with high ceilings and heavy-load flooring. Ideal for storage or light manufacturing.',
-    ownerContact: '0541217931',
+    landlordContact: '0541217931',
   },
   {
     id: '8',
@@ -127,7 +135,7 @@ export const DUMMY_PROPERTIES: Property[] = [
     imageUrl: 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?q=80&w=800&auto=format&fit=crop',
     status: 'Available',
     description: 'Premium shop space inside the Kumasi City Mall. Ready for immediate move-in for fashion or electronics brands.',
-    ownerContact: '0559962434',
+    landlordContact: '0559962434',
   },
   {
     id: '9',
@@ -140,7 +148,7 @@ export const DUMMY_PROPERTIES: Property[] = [
     imageUrl: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=800&auto=format&fit=crop',
     status: 'Available',
     description: 'Affordable coworking desk in a vibrant community. Includes coffee, high-speed internet, and access to meeting rooms.',
-    ownerContact: '0541217931',
+    landlordContact: '0541217931',
   },
   {
     id: '10',
@@ -155,7 +163,7 @@ export const DUMMY_PROPERTIES: Property[] = [
     imageUrl: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?q=80&w=800&auto=format&fit=crop',
     status: 'Available',
     description: 'Stunning 6-bedroom beachfront guest house. Excellent ROI potential for Airbnb or a private vacation home.',
-    ownerContact: '0559962434',
+    landlordContact: '0559962434',
   },
   {
     id: '11',
@@ -168,7 +176,7 @@ export const DUMMY_PROPERTIES: Property[] = [
     imageUrl: 'https://images.unsplash.com/photo-1559925393-8be0ec41b5ec?q=80&w=800&auto=format&fit=crop',
     status: 'Available',
     description: 'Perfect corner spot for a café or bakery. Prime visibility in a high-end neighborhood.',
-    ownerContact: '0541217931',
+    landlordContact: '0541217931',
   },
   {
     id: '12',
@@ -181,7 +189,7 @@ export const DUMMY_PROPERTIES: Property[] = [
     imageUrl: 'https://images.unsplash.com/photo-1540575861501-7cf05a4b175a?q=80&w=800&auto=format&fit=crop',
     status: 'Available',
     description: 'Spacious hall designed for exhibitions and trade fairs. Fully air-conditioned with sound system setup.',
-    ownerContact: '0559962434',
+    landlordContact: '0559962434',
   },
   {
     id: '13',
@@ -194,6 +202,6 @@ export const DUMMY_PROPERTIES: Property[] = [
     imageUrl: 'https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?q=80&w=800&auto=format&fit=crop',
     status: 'Available',
     description: 'Modern office space in the heart of Adabraka, ideal for tech startups and creative agencies.',
-    ownerContact: '0541217931',
+    landlordContact: '0541217931',
   }
 ];

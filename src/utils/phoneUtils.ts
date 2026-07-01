@@ -1,6 +1,13 @@
 /**
- * Formats a phone number for WhatsApp international format.
- * Defaults to Ghana (+233) if no country code is provided.
+ * Utility module for handling and standardizing phone numbers.
+ */
+
+/**
+ * Formats a given phone number string into an international WhatsApp-compatible format.
+ * Defaults to the Ghana country code (233) if no country code is detected.
+ * 
+ * @param phone - The raw phone number string input (e.g., '0241234567').
+ * @returns A purely numeric string formatted with the correct country code (e.g., '233241234567').
  */
 export const formatPhoneForWhatsApp = (phone: string): string => {
   // Remove all non-numeric characters

@@ -5,6 +5,10 @@ import Animated, { Keyframe, Easing } from 'react-native-reanimated';
 import classes from './animated-icon.module.css';
 const DURATION = 300;
 
+/**
+ * Web stub for the splash screen overlay. On the web platform, the initial load
+ * doesn't require the complex native transition logic.
+ */
 export function AnimatedSplashOverlay() {
   return null;
 }
@@ -54,6 +58,10 @@ const glowKeyframe = new Keyframe({
   },
 });
 
+/**
+ * Web-specific implementation of the AnimatedIcon using CSS modules and web-safe animations.
+ * Provides the same glowing and scaling effect as the native version but optimized for browsers.
+ */
 export function AnimatedIcon() {
   return (
     <View style={styles.iconContainer}>

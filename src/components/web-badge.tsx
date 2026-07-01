@@ -8,6 +8,10 @@ import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
 
+/**
+ * A simple UI badge displayed on the web output.
+ * Shows the Expo logo and the current version from package.json.
+ */
 export function WebBadge() {
   const scheme = useColorScheme();
 

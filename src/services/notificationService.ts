@@ -11,6 +11,10 @@ export type Notification = {
   created_at: string;
 };
 
+/**
+ * Service object for handling user notifications.
+ * Connects to the 'notifications' table to fetch, update, and manage read states.
+ */
 export const notificationService = {
   async getNotifications(userId: string): Promise<Notification[]> {
     const { data, error } = await supabase

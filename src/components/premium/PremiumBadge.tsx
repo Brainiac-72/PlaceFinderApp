@@ -8,6 +8,10 @@ interface PremiumBadgeProps {
   style?: ViewStyle;
 }
 
+/**
+ * A stylized badge component for displaying small tags, statuses, or categories.
+ * Supports multiple semantic variants (primary, success, error, warning, surface).
+ */
 export const PremiumBadge: React.FC<PremiumBadgeProps> = ({
   label,
   variant = 'surface',

@@ -16,6 +16,10 @@ interface SpotlightCardProps {
   onPress: () => void;
 }
 
+/**
+ * A large, visually prominent card used for featured or 'Spotlight' properties.
+ * Designed to be swiped through in a horizontal carousel at the top of the Home feed.
+ */
 const SpotlightCard = ({ property, onPress }: SpotlightCardProps) => {
   const { colors } = useThemeColor();
 

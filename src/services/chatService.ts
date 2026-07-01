@@ -4,11 +4,11 @@ export interface ChatSession {
   id: string;
   property_id: string;
   seeker_id: string;
-  owner_id: string;
+  landlord_id: string;
   created_at: string;
   updated_at: string;
   property?: any;
-  owner?: any;
+  landlord?: any;
   seeker?: any;
 }
 
@@ -23,6 +23,10 @@ export interface ChatMessage {
   attached_property?: any;
 }
 
+/**
+ * Service object encapsulating all database interactions for the Chat/Messaging feature.
+ * Connects directly to the 'chats' and 'messages' tables in Supabase.
+ */
 export const chatService = {
   async getUserChats(userId: string): Promise<ChatSession[]> {
     const { data, error } = await supabase
@@ -30,10 +34,10 @@ export const chatService = {
       .select(`
         *,
         property:property_id(*),
-        owner:owner_id(*),
+        landlord:landlord_id(*),
         seeker:seeker_id(*)
       `)
-      .or(`seeker_id.eq.${userId},owner_id.eq.${userId}`)
+      .or(`seeker_id.eq.${userId},landlord_id.eq.${userId}`)
       .order('updated_at', { ascending: false });
 
     if (error) {
@@ -44,14 +48,14 @@ export const chatService = {
     return data || [];
   },
 
-  async getOrCreateChat(propertyId: string, seekerId: string, ownerId: string): Promise<string | null> {
+  async getOrCreateChat(propertyId: string, seekerId: string, landlordId: string): Promise<string | null> {
     // Check if chat exists
     const { data: existingChats, error: fetchError } = await supabase
       .from('chats')
       .select('id')
       .eq('property_id', propertyId)
       .eq('seeker_id', seekerId)
-      .eq('owner_id', ownerId)
+      .eq('landlord_id', landlordId)
       .limit(1);
 
     if (fetchError) {
@@ -69,7 +73,7 @@ export const chatService = {
       .insert({
         property_id: propertyId,
         seeker_id: seekerId,
-        owner_id: ownerId
+        landlord_id: landlordId
       })
       .select('id')
       .single();
@@ -133,7 +137,7 @@ export const chatService = {
       .select(`
         *,
         property:property_id(*),
-        owner:owner_id(*),
+        landlord:landlord_id(*),
         seeker:seeker_id(*)
       `)
       .eq('id', chatId)

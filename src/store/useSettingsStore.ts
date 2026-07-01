@@ -3,6 +3,7 @@ import { Appearance } from 'react-native';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+/** The possible theme modes chosen by the user. */
 type ThemeMode = 'light' | 'dark' | 'system';
 
 interface SettingsState {
@@ -15,6 +16,10 @@ interface SettingsState {
   getIsDark: () => boolean;
 }
 
+/**
+ * Global Zustand store for managing app-wide settings (e.g., Theme preference, Onboarding status).
+ * Persists data to local AsyncStorage to remember settings across sessions.
+ */
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({

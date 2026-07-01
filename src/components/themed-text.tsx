@@ -8,6 +8,10 @@ export type ThemedTextProps = TextProps & {
   themeColor?: ThemeColor;
 };
 
+/**
+ * A highly reusable custom Text component that automatically adopts the app's current theme colors.
+ * Eliminates the need to manually pass light/dark mode text colors across screens.
+ */
 export function ThemedText({ style, type = 'default', themeColor, ...rest }: ThemedTextProps) {
   const theme = useTheme();
 

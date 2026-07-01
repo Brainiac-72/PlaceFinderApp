@@ -11,6 +11,10 @@ type HintRowProps = {
   hint?: ReactNode;
 };
 
+/**
+ * A small utility UI component used primarily in starter templates.
+ * Displays a descriptive label next to a highlighted code snippet or path.
+ */
 export function HintRow({ title = 'Try editing', hint = 'app/index.tsx' }: HintRowProps) {
   return (
     <View style={styles.stepRow}>

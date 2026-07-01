@@ -2,9 +2,12 @@ import { Session, User } from '@supabase/supabase-js';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../utils/supabase';
 
+/**
+ * Custom extended user profile mapping to the `profiles` table in Supabase.
+ */
 export type UserProfile = {
   id: string;
-  role: 'owner' | 'seeker' | 'admin';
+  role: 'landlord' | 'seeker' | 'admin';
   full_name?: string;
   phone_number?: string;
   avatar_url?: string;
@@ -28,6 +31,12 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
+/**
+ * Global Authentication Provider.
+ * Initializes the Supabase session on app start, listens for auth state changes
+ * (login/logout), and fetches the extended user profile from the database.
+ * Wraps the entire application to provide auth context downwards.
+ */
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);

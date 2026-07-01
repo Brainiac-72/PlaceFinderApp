@@ -1,13 +1,19 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Platform, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useThemeColor } from '../../hooks/useThemeColor';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+/**
+ * The Privacy Policy & Security Center screen.
+ * Displays static information regarding data collection, usage, and security practices.
+ */
 export default function PrivacyPolicyScreen() {
   const router = useRouter();
   const { colors, isDark } = useThemeColor();
+  const insets = useSafeAreaInsets();
 
   const sections = [
     {
@@ -18,7 +24,7 @@ export default function PrivacyPolicyScreen() {
     },
     {
       title: "How We Use Data",
-      content: "Your data is used to facilitate connections between property owners and seekers. We use your phone number to allow direct contact via WhatsApp or voice calls.",
+      content: "Your data is used to facilitate connections between landlords and seekers. We use your phone number to allow direct contact via WhatsApp or voice calls.",
       icon: "magnet",
       color: "#34C759"
     },
@@ -43,9 +49,12 @@ export default function PrivacyPolicyScreen() {
   ];
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+    <View style={[styles.safeArea, { backgroundColor: colors.background, paddingTop: insets.top + (Platform.OS === 'android' ? 15 : 0) }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity 
+          onPress={() => router.navigate('/profile')} 
+          style={styles.backBtn}
+        >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Privacy Center</Text>
@@ -98,7 +107,7 @@ export default function PrivacyPolicyScreen() {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

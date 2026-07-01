@@ -15,6 +15,7 @@ import { propertyService } from '../services/propertyService';
 
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts, Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold, Outfit_800ExtraBold } from '@expo-google-fonts/outfit';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { PlayfairDisplay_700Bold, PlayfairDisplay_900Black, PlayfairDisplay_400Regular } from '@expo-google-fonts/playfair-display';
@@ -30,6 +31,10 @@ const queryClient = new QueryClient({
   },
 });
 
+/**
+ * The inner layout component responsible for initializing fonts, checking auth status,
+ * handling onboarding redirection, and pre-fetching critical queries.
+ */
 function RootLayoutNav() {
   const { session, loading: authLoading } = useAuth();
   const { hasFinishedOnboarding, hasHydrated } = useSettingsStore();
@@ -148,6 +153,11 @@ const toastConfig = {
   ),
 };
 
+/**
+ * The absolute root entry point of the Expo Router application.
+ * Wraps the entire app in global providers (GestureHandler, QueryClient, Theme, Auth, Alerts, etc.)
+ * and configures global toast notifications.
+ */
 export default function RootLayout() {
   const { isDark, colors } = useThemeColor();
 
@@ -177,7 +187,8 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider value={isDark ? customDarkTheme : customLightTheme}>
-          <BottomSheetModalProvider>
+          <SafeAreaProvider>
+            <BottomSheetModalProvider>
             <AuthProvider>
               <AlertProvider>
                 <RootLayoutNav />
@@ -185,7 +196,8 @@ export default function RootLayout() {
                 <StatusBar style={isDark ? 'light' : 'dark'} />
               </AlertProvider>
             </AuthProvider>
-          </BottomSheetModalProvider>
+            </BottomSheetModalProvider>
+          </SafeAreaProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>

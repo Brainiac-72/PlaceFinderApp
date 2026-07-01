@@ -1,9 +1,20 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, Pressable, Dimensions, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { useThemeColor } from '../hooks/useThemeColor';
-import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
+import React, { createContext, ReactNode, useContext, useState } from "react";
+import {
+  Dimensions,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Animated, { ZoomIn, ZoomOut } from "react-native-reanimated";
+import { useThemeColor } from "../hooks/useThemeColor";
 
-export type AlertButtonStyle = 'default' | 'cancel' | 'destructive';
+export type AlertButtonStyle = "default" | "cancel" | "destructive";
 
 export interface AlertButton {
   text: string;
@@ -17,24 +28,40 @@ interface AlertOptions {
   buttons?: AlertButton[];
 }
 
+/**
+ * The data shape exposed by the AlertContext to child components.
+ */
 interface AlertContextData {
   showAlert: (title: string, message?: string, buttons?: AlertButton[]) => void;
 }
 
 const AlertContext = createContext<AlertContextData | undefined>(undefined);
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 // Fallback default button
-const DEFAULT_BUTTONS: AlertButton[] = [{ text: 'OK' }];
+const DEFAULT_BUTTONS: AlertButton[] = [{ text: "OK" }];
 
+/**
+ * Global provider for custom, highly-styled alert modals.
+ * Wraps the app to allow any component to trigger a unified alert dialog
+ * that matches the app's dark/light theme, replacing default system alerts.
+ */
 export const AlertProvider = ({ children }: { children: ReactNode }) => {
   const { colors, isDark } = useThemeColor();
   const [visible, setVisible] = useState(false);
   const [options, setOptions] = useState<AlertOptions | null>(null);
 
-  const showAlert = (title: string, message?: string, buttons?: AlertButton[]) => {
-    setOptions({ title, message, buttons: buttons && buttons.length > 0 ? buttons : DEFAULT_BUTTONS });
+  const showAlert = (
+    title: string,
+    message?: string,
+    buttons?: AlertButton[],
+  ) => {
+    setOptions({
+      title,
+      message,
+      buttons: buttons && buttons.length > 0 ? buttons : DEFAULT_BUTTONS,
+    });
     setVisible(true);
   };
 
@@ -56,65 +83,109 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AlertContext.Provider value={{ showAlert }}>
       {children}
-      
+
       <Modal transparent visible={visible} animationType="fade">
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{ flex: 1 }}
+        >
           <View style={styles.overlay}>
             <Pressable style={styles.backdrop} onPress={handleClose} />
-            
+
             {visible && (
-              <Animated.View 
-                entering={ZoomIn.duration(200)} 
+              <Animated.View
+                entering={ZoomIn.duration(200)}
                 exiting={ZoomOut.duration(150)}
-                style={[styles.alertContainer, { backgroundColor: colors.card, shadowColor: isDark ? '#fff' : '#000' }]}
+                style={[
+                  styles.alertContainer,
+                  {
+                    backgroundColor: colors.card,
+                    shadowColor: isDark ? "#fff" : "#000",
+                  },
+                ]}
               >
                 <View style={styles.content}>
-                  <Text style={[styles.title, { color: colors.text }]}>{options?.title}</Text>
-                  {!!options?.message && <Text style={[styles.message, { color: colors.textSecondary }]}>{options.message}</Text>}
+                  <Text style={[styles.title, { color: colors.text }]}>
+                    {options?.title}
+                  </Text>
+                  {!!options?.message && (
+                    <Text
+                      style={[styles.message, { color: colors.textSecondary }]}
+                    >
+                      {options.message}
+                    </Text>
+                  )}
                 </View>
 
                 {(() => {
                   const numButtons = options?.buttons?.length || 0;
                   const isVertical = numButtons > 2;
-                  
+
                   return (
-                    <ScrollView 
+                    <ScrollView
                       style={[
                         isVertical && { maxHeight: 300 }, // Cap button list height if vertical
-                        { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border }
+                        {
+                          borderTopWidth: StyleSheet.hairlineWidth,
+                          borderTopColor: colors.border,
+                        },
                       ]}
                       bounces={false}
                       showsVerticalScrollIndicator={true}
                     >
-                      <View style={[
-                        styles.buttonsContainer, 
-                        isVertical && { flexDirection: 'column' }
-                      ]}>
+                      <View
+                        style={[
+                          styles.buttonsContainer,
+                          isVertical && { flexDirection: "column" },
+                        ]}
+                      >
                         {options?.buttons?.map((btn, index) => {
                           const isLast = index === options.buttons!.length - 1;
-                          const isDestructive = btn.style === 'destructive';
-                          const isCancel = btn.style === 'cancel';
-                          
+                          const isDestructive = btn.style === "destructive";
+                          const isCancel = btn.style === "cancel";
+
                           return (
-                            <TouchableOpacity 
-                              key={index} 
+                            <TouchableOpacity
+                              key={index}
                               style={[
-                                styles.button, 
-                                !isVertical && !isLast && styles.buttonBorderRight,
-                                !isVertical && !isLast && { borderRightColor: colors.border },
-                                isVertical && !isLast && styles.buttonBorderBottom,
-                                isVertical && !isLast && { borderBottomColor: colors.border },
-                                isVertical && { width: '100%', minHeight: 48 }
-                              ]} 
+                                styles.button,
+                                !isVertical &&
+                                  !isLast &&
+                                  styles.buttonBorderRight,
+                                !isVertical &&
+                                  !isLast && {
+                                    borderRightColor: colors.border,
+                                  },
+                                isVertical &&
+                                  !isLast &&
+                                  styles.buttonBorderBottom,
+                                isVertical &&
+                                  !isLast && {
+                                    borderBottomColor: colors.border,
+                                  },
+                                isVertical && { width: "100%", minHeight: 48 },
+                              ]}
                               onPress={() => handleButtonPress(btn)}
                               activeOpacity={0.7}
                             >
-                              <Text style={[
-                                styles.buttonText,
-                                isCancel && { color: colors.textSecondary, fontWeight: '500' },
-                                isDestructive && { color: colors.error, fontWeight: '700' },
-                                !isCancel && !isDestructive && { color: colors.primary, fontWeight: '700' }
-                                ]}>
+                              <Text
+                                style={[
+                                  styles.buttonText,
+                                  isCancel && {
+                                    color: colors.textSecondary,
+                                    fontWeight: "500",
+                                  },
+                                  isDestructive && {
+                                    color: colors.error,
+                                    fontWeight: "700",
+                                  },
+                                  !isCancel &&
+                                    !isDestructive && {
+                                      color: colors.primary,
+                                      fontWeight: "700",
+                                    },
+                                ]}
+                              >
                                 {btn.text}
                               </Text>
                             </TouchableOpacity>
@@ -133,10 +204,14 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+/**
+ * Hook to access the global custom alert function.
+ * Use `const { showAlert } = useCustomAlert();` to trigger modals.
+ */
 export const useCustomAlert = () => {
   const context = useContext(AlertContext);
   if (!context) {
-    throw new Error('useCustomAlert must be used within an AlertProvider');
+    throw new Error("useCustomAlert must be used within an AlertProvider");
   }
   return context;
 };
@@ -144,9 +219,9 @@ export const useCustomAlert = () => {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
@@ -154,9 +229,9 @@ const styles = StyleSheet.create({
   alertContainer: {
     width: width * 0.85,
     maxWidth: 340,
-    maxHeight: '80%',
+    maxHeight: "80%",
     borderRadius: 20,
-    overflow: 'hidden',
+    overflow: "hidden",
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
@@ -164,29 +239,29 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 24,
-    alignItems: 'center',
+    alignItems: "center",
   },
   title: {
     fontSize: 20,
-    fontWeight: '800',
-    textAlign: 'center',
+    fontWeight: "800",
+    textAlign: "center",
     marginBottom: 8,
     letterSpacing: -0.5,
   },
   message: {
     fontSize: 15,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 22,
-    fontWeight: '400',
+    fontWeight: "400",
   },
   buttonsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     minHeight: 52,
   },
   button: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 14,
     paddingHorizontal: 10,
   },

@@ -1,11 +1,15 @@
 import { supabase } from '../utils/supabase';
 import { mapSupabaseProperty, Property } from '../utils/propertyUtils';
 
+/**
+ * Service object encapsulating all database interactions for Properties (Listings).
+ * Handles fetching, updating status, counting views/shares, and deleting properties.
+ */
 export const propertyService = {
   async getAllProperties(): Promise<Property[]> {
     const { data, error } = await supabase
       .from('properties')
-      .select('*, profiles:owner_id(phone_number)')
+      .select('*, profiles:landlord_id(phone_number)')
       .order('created_at', { ascending: false });
     
     if (error) throw error;
@@ -15,8 +19,8 @@ export const propertyService = {
   async getMyProperties(userId: string): Promise<Property[]> {
     const { data, error } = await supabase
       .from('properties')
-      .select('*, profiles:owner_id(phone_number)')
-      .eq('owner_id', userId)
+      .select('*, profiles:landlord_id(phone_number)')
+      .eq('landlord_id', userId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -26,7 +30,7 @@ export const propertyService = {
   async getPropertyById(id: string): Promise<Property | null> {
     const { data, error } = await supabase
       .from('properties')
-      .select('*, profiles:owner_id(phone_number)')
+      .select('*, profiles:landlord_id(phone_number)')
       .eq('id', id)
       .single();
 

@@ -15,12 +15,17 @@ const { width, height } = Dimensions.get('window');
 // Same premium background to maintain consistency
 const BG_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80';
 
+/**
+ * The Registration Screen.
+ * Allows new users to sign up as either a 'seeker' or 'landlord'.
+ * Automatically creates their user record and a linked profile in the Supabase database.
+ */
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [role, setRole] = useState<'seeker' | 'owner'>('seeker');
+  const [role, setRole] = useState<'seeker' | 'landlord'>('seeker');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { colors, isDark } = useThemeColor();
@@ -102,12 +107,12 @@ export default function RegisterScreen() {
                     </TouchableOpacity>
                     
                     <TouchableOpacity 
-                      style={[styles.roleBtn, role === 'owner' ? styles.roleBtnActive : styles.roleBtnInactive]}
-                      onPress={() => setRole('owner')}
+                      style={[styles.roleBtn, role === 'landlord' ? styles.roleBtnActive : styles.roleBtnInactive]}
+                      onPress={() => setRole('landlord')}
                       activeOpacity={0.8}
                     >
-                      <Ionicons name="home" size={18} color={role === 'owner' ? '#FFF' : '#A0A0A0'} />
-                      <Text style={[styles.roleText, role === 'owner' ? styles.roleTextActive : styles.roleTextInactive]}>Landlord</Text>
+                      <Ionicons name="home" size={18} color={role === 'landlord' ? '#FFF' : '#A0A0A0'} />
+                      <Text style={[styles.roleText, role === 'landlord' ? styles.roleTextActive : styles.roleTextInactive]}>Landlord</Text>
                     </TouchableOpacity>
                   </View>
 

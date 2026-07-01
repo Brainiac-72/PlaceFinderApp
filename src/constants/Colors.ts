@@ -1,3 +1,7 @@
+/**
+ * The core color palette for the entire application, separated into 'light' and 'dark' themes.
+ * Contains semantic colors (like background, card, primary, success) to ensure consistency.
+ */
 export const Colors = {
   light: {
     background: '#F9FAFB',

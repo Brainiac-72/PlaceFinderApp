@@ -31,6 +31,10 @@ const SLIDES = [
   },
 ];
 
+/**
+ * The Onboarding carousel screen presented to users on their very first app launch.
+ * Uses a horizontal FlatList with animated dot indicators.
+ */
 export default function OnboardingScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollX = useRef(new Animated.Value(0)).current;

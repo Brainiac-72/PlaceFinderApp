@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, Alert, Platform, SafeAreaView, KeyboardAvoidingView, ActivityIndicator, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, Alert, Platform, KeyboardAvoidingView, ActivityIndicator, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useThemeColor } from '../../hooks/useThemeColor';
 import { supabase } from '../../utils/supabase';
 import { useAuth } from '../../providers/AuthProvider';
@@ -15,11 +15,22 @@ import { useRouter } from 'expo-router';
 
 const PROPERTY_TYPES = ['Residential', 'Commercial', 'Office', 'Shop', 'Event'];
 
+/**
+ * The Property Listing Creation Screen.
+ * Allows landlords to upload a new property, complete with images, details, and amenities.
+ * Handles uploading the image to Supabase storage before creating the database row.
+ */
 export default function PostPropertyScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useThemeColor();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (profile && profile.role === 'seeker') {
+      router.replace('/(tabs)');
+    }
+  }, [profile, router]);
 
   const [title, setTitle] = useState('');
   const [type, setType] = useState('Residential');
@@ -109,7 +120,7 @@ export default function PostPropertyScreen() {
     }
 
     const propertyData = {
-      owner_id: user.id,
+      landlord_id: user.id,
       title: title.trim(),
       type,
       price: parseFloat(price),
@@ -154,7 +165,7 @@ export default function PostPropertyScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+    <View style={[styles.safeArea, { backgroundColor: colors.background, paddingTop: insets.top + (Platform.OS === 'android' ? 15 : 0) }]}>
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -371,7 +382,7 @@ export default function PostPropertyScreen() {
           )}
         </TouchableOpacity>
       </BlurView>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { useColorScheme as useRNColorScheme } from 'react-native';
 
 /**
- * To support static rendering, this value needs to be re-calculated on the client side for web
+ * Web-specific implementation of useColorScheme.
+ * To support static rendering (SSR) in Expo web, this hook ensures the value 
+ * is only read and applied after the client has hydrated, preventing hydration mismatches.
  */
 export function useColorScheme() {
   const [hasHydrated, setHasHydrated] = useState(false);

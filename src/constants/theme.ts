@@ -26,6 +26,10 @@ export const Colors = {
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
+/**
+ * Cross-platform font families mapping.
+ * Uses native system fonts on iOS/Android, and CSS variables on Web.
+ */
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */
@@ -51,6 +55,9 @@ export const Fonts = Platform.select({
   },
 });
 
+/**
+ * Standardized spacing scale (in pixels) to maintain consistent margins and padding across the app.
+ */
 export const Spacing = {
   half: 2,
   one: 4,
@@ -61,5 +68,8 @@ export const Spacing = {
   six: 64,
 } as const;
 
+/** Platform-specific inset padding to account for the bottom tab bar. */
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
+
+/** Maximum width constraint for centering content on large screens (like web/tablets). */
 export const MaxContentWidth = 800;

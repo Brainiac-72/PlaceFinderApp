@@ -18,6 +18,10 @@ interface SkeletonProps {
   style?: ViewStyle;
 }
 
+/**
+ * A primitive loading placeholder component that continuously shimmers/pulses.
+ * Used to indicate that content is currently being fetched.
+ */
 export const Skeleton = ({ width, height, borderRadius = 8, style }: SkeletonProps) => {
   const shimmerValue = useSharedValue(0);
 
@@ -56,6 +60,10 @@ export const Skeleton = ({ width, height, borderRadius = 8, style }: SkeletonPro
   );
 };
 
+/**
+ * A pre-composed skeleton layout that mimics the exact shape of a `PropertyCard`.
+ * Ideal for displaying while property feeds are loading.
+ */
 export const PropertyCardSkeleton = ({ gridMode }: { gridMode?: boolean }) => {
   const { colors } = useThemeColor();
   return (

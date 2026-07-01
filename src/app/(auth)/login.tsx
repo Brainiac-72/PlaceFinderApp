@@ -14,6 +14,10 @@ const { width, height } = Dimensions.get('window');
 // Premium modern interior photo for the background
 const BG_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80';
 
+/**
+ * The Login Screen.
+ * Handles existing user authentication using Supabase email/password or OAuth.
+ */
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

@@ -11,6 +11,10 @@ interface PremiumInputProps extends TextInputProps {
   containerStyle?: ViewStyle;
 }
 
+/**
+ * A stylized text input field with animated focus states.
+ * Supports icons (left/right), error messages, and top labels.
+ */
 export const PremiumInput: React.FC<PremiumInputProps> = ({
   label,
   error,

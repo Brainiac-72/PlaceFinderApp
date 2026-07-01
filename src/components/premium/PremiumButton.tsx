@@ -16,6 +16,10 @@ interface PremiumButtonProps {
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
+/**
+ * An elevated, animated button component that reacts to touches with a spring scale effect.
+ * Supports various styling variants (primary, secondary, outline, ghost) and loading states.
+ */
 export const PremiumButton: React.FC<PremiumButtonProps> = ({
   title,
   onPress,

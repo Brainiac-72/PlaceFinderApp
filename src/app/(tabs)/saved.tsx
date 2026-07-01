@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Platform } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Heart, Compass, Search } from 'lucide-react-native';
+import { Heart, Home, Search } from 'lucide-react-native';
 import { useSavedStore } from '../../store/useSavedStore';
 import { DUMMY_PROPERTIES } from '../../data/dummyProperties';
 import PropertyCard from '../../components/PropertyCard';
@@ -15,6 +15,10 @@ import * as Haptics from 'expo-haptics';
 import { SectionHeader } from '../../components/premium/SectionHeader';
 import { PremiumButton } from '../../components/premium/PremiumButton';
 
+/**
+ * The Saved Properties (Favorites) screen.
+ * Fetches and displays a list of properties that the user has marked as 'saved' via the global store.
+ */
 export default function SavedScreen() {
   const savedIds = useSavedStore(state => state.savedIds);
   const router = useRouter();
@@ -75,7 +79,7 @@ export default function SavedScreen() {
         <PremiumButton 
           title="Explore Spaces" 
           onPress={() => router.push('/(tabs)')} 
-          icon={<Compass size={20} color="#0A0F1E" />}
+          icon={<Home size={20} color="#0A0F1E" />}
           style={{ width: '100%', marginTop: 12 }}
         />
       </View>
@@ -83,7 +87,7 @@ export default function SavedScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: '#0A0F1E', paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: '#0A0F1E', paddingTop: insets.top + (Platform.OS === 'android' ? 15 : 0) }]}>
       <StatusBar barStyle="light-content" />
       <View style={styles.header}>
         <SectionHeader 

@@ -26,6 +26,11 @@ import { Linking } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
+/**
+ * The Property Details Screen.
+ * Displays comprehensive information about a specific property listing.
+ * Includes actions to save/favorite, share, contact landlord (chat/call), or manage (if landlord).
+ */
 export default function PropertyDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -41,14 +46,14 @@ export default function PropertyDetailsScreen() {
     initialData: () => DUMMY_PROPERTIES.find(p => p.id === id) as any
   });
 
-  const isOwner = useMemo(() => user && property && user.id === property.owner_id, [user, property]);
+  const isLandlord = useMemo(() => user && property && user.id === property.landlord_id, [user, property]);
   const isSaved = useSavedStore(state => state.isSaved(id || ''));
   const toggleSaved = useSavedStore(state => state.toggleSaved);
   
-  const snapPoints = useMemo(() => isOwner ? ['50%'] : ['35%'], [isOwner]);
+  const snapPoints = useMemo(() => isLandlord ? ['50%'] : ['35%'], [isLandlord]);
 
   useEffect(() => {
-    if (id && user && property && user.id !== property.owner_id) {
+    if (id && user && property && user.id !== property.landlord_id) {
         propertyService.incrementViewCount(id);
     }
   }, [id, user?.id, !!property]);
@@ -72,7 +77,7 @@ export default function PropertyDetailsScreen() {
     }
     try {
       bottomSheetModalRef.current?.dismiss();
-      const chatId = await chatService.getOrCreateChat(property.id, user.id, property.owner_id);
+      const chatId = await chatService.getOrCreateChat(property.id, user.id, property.landlord_id);
       if (chatId) router.push(`/chat/${chatId}`);
       else showAlert('Error', 'Could not start conversation.');
     } catch (e) {
@@ -113,7 +118,7 @@ export default function PropertyDetailsScreen() {
         message: `Check out this space on SpaceFinder: ${property.title} in ${property.location}.`,
         title: property.title,
       });
-      if (user?.id !== property.owner_id) propertyService.incrementShareCount(property.id);
+      if (user?.id !== property.landlord_id) propertyService.incrementShareCount(property.id);
     } catch (error) {}
   };
 
@@ -224,7 +229,7 @@ export default function PropertyDetailsScreen() {
           <Text style={styles.footerValue}>{property.currency}{property.price.toLocaleString()}</Text>
         </View>
         <PremiumButton 
-          title={isOwner ? 'Manage Space' : 'Contact Owner'} 
+          title={isLandlord ? 'Manage Space' : 'Contact Landlord'} 
           onPress={handlePresentModalPress} 
           style={{ flex: 1.2 }}
         />
@@ -238,9 +243,9 @@ export default function PropertyDetailsScreen() {
         handleIndicatorStyle={{ backgroundColor: '#374151', width: 40 }}
       >
         <BottomSheetView style={styles.sheetBody}>
-          <Text style={styles.sheetTitle}>{isOwner ? 'Manage Your Listing' : 'Get in Touch'}</Text>
+          <Text style={styles.sheetTitle}>{isLandlord ? 'Manage Your Listing' : 'Get in Touch'}</Text>
           <View style={{ gap: 12, marginTop: 24 }}>
-            {isOwner ? (
+            {isLandlord ? (
               <>
                 <PremiumButton title="Mark as Available" variant="secondary" onPress={() => handleUpdateStatus('Available')} icon={<CheckCircle2 size={20} color="#10B981" />} />
                 <PremiumButton title="Mark as Taken" variant="secondary" onPress={() => handleUpdateStatus('Taken')} icon={<XCircle size={20} color="#EF4444" />} />
@@ -249,7 +254,7 @@ export default function PropertyDetailsScreen() {
             ) : (
               <>
                 <PremiumButton title="Message in App" onPress={handleInAppMessage} icon={<MessageSquare size={20} color="#0A0F1E" />} />
-                <PremiumButton title="Call Property Manager" variant="secondary" onPress={() => Linking.openURL(`tel:${property.owner_phone || '0000000000'}`)} />
+                <PremiumButton title="Call Property Manager" variant="secondary" onPress={() => Linking.openURL(`tel:${property.landlord_phone || '0000000000'}`)} />
               </>
             )}
           </View>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, TextInput, Linking, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Linking, LayoutAnimation, Platform, UIManager, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useThemeColor } from '../../hooks/useThemeColor';
@@ -29,10 +30,15 @@ const FAQS = [
   }
 ];
 
+/**
+ * The Help Center & Support Screen.
+ * Provides FAQs, contact options (email, WhatsApp, call), and technical support access.
+ */
 export default function SupportScreen() {
   const router = useRouter();
   const { colors, isDark } = useThemeColor();
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const insets = useSafeAreaInsets();
 
   const toggleExpand = (index: number) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -46,9 +52,12 @@ export default function SupportScreen() {
   ];
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+    <View style={[styles.safeArea, { backgroundColor: colors.background, paddingTop: insets.top + (Platform.OS === 'android' ? 15 : 0) }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity 
+          onPress={() => router.navigate('/profile')} 
+          style={styles.backBtn}
+        >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Help Center</Text>
@@ -115,7 +124,7 @@ export default function SupportScreen() {
           <Text style={[styles.reportText, { color: colors.error }]}>Report a Technical Problem</Text>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -2,11 +2,18 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { BlurView } from 'expo-blur';
 import { Platform, StyleSheet, View } from 'react-native';
-import { Compass, Bookmark, Plus, MessageCircle, UserCircle } from 'lucide-react-native';
+import { Home, Bookmark, Plus, MessageCircle, UserCircle } from 'lucide-react-native';
 import { useThemeColor } from '../../hooks/useThemeColor';
+import { useAuth } from '../../providers/AuthProvider';
 
+/**
+ * The bottom tab navigator layout for the main application screens.
+ * Contains the custom styled tab bar with blur effects and floating action buttons.
+ */
 export default function TabLayout() {
   const { colors, isDark } = useThemeColor();
+  const { profile } = useAuth();
+  const isLandlord = profile?.role === 'landlord';
   
   return (
     <Tabs 
@@ -49,7 +56,7 @@ export default function TabLayout() {
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconContainer, focused && { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
-              <Compass size={24} color={color} strokeWidth={focused ? 2.5 : 2} />
+              <Home size={24} color={color} strokeWidth={focused ? 2.5 : 2} />
             </View>
           )
         }} 
@@ -69,6 +76,7 @@ export default function TabLayout() {
         name="post" 
         options={{ 
           title: 'Post',
+          href: isLandlord ? '/post' : null,
           tabBarIcon: ({ focused }) => (
             <View style={styles.postButton}>
               <Plus size={32} color={colors.badgeText} strokeWidth={3} />
@@ -87,13 +95,7 @@ export default function TabLayout() {
           )
         }} 
       />
-      <Tabs.Screen 
-        name="notifications" 
-        options={{ 
-          title: 'Updates',
-          href: null,
-        }} 
-      />
+
       <Tabs.Screen 
         name="profile" 
         options={{ 

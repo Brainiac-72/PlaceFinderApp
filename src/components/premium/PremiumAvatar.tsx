@@ -11,6 +11,10 @@ interface PremiumAvatarProps {
   style?: ViewStyle;
 }
 
+/**
+ * A high-quality user avatar component with an optional online status indicator.
+ * Automatically falls back to an initial-based image if no URI is provided.
+ */
 export const PremiumAvatar: React.FC<PremiumAvatarProps> = ({
   uri,
   name,

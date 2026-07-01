@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useThemeColor } from '../../hooks/useThemeColor';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+/**
+ * The App Settings Screen.
+ * Allows users to toggle preferences like push notifications, email updates, and location services.
+ */
 export default function SettingsScreen() {
   const router = useRouter();
   const { colors } = useThemeColor();
+  const insets = useSafeAreaInsets();
 
   const [notifications, setNotifications] = useState(true);
   const [emailUpdates, setEmailUpdates] = useState(true);
@@ -32,9 +38,12 @@ export default function SettingsScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+    <View style={[styles.safeArea, { backgroundColor: colors.background, paddingTop: insets.top + (Platform.OS === 'android' ? 15 : 0) }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity 
+          onPress={() => router.navigate('/profile')} 
+          style={styles.backBtn}
+        >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Settings</Text>
@@ -77,7 +86,7 @@ export default function SettingsScreen() {
         </Animated.View>
 
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -13,12 +13,22 @@ import { AMENITIES } from '../../../constants/Amenities';
 
 const PROPERTY_TYPES = ['Residential', 'Commercial', 'Office', 'Shop', 'Event'];
 
+/**
+ * The Property Edit Screen.
+ * Allows a property landlord to update the details, amenities, or images of an existing listing.
+ */
 export default function EditPropertyScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useThemeColor();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+
+  useEffect(() => {
+    if (profile && profile.role === 'seeker') {
+      router.replace('/(tabs)');
+    }
+  }, [profile, router]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

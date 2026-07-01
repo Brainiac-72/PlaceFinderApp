@@ -4,6 +4,10 @@ import { useColorScheme } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 
+/**
+ * Native implementation of the bottom tab navigation bar using `expo-router/unstable-native-tabs`.
+ * It automatically maps to the native iOS/Android tab components rather than rendering JS views.
+ */
 export default function AppTabs() {
   const scheme = useColorScheme();
   const colors = Colors[scheme ?? 'light'];

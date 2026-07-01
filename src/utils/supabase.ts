@@ -6,8 +6,16 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
+/**
+ * Check if the code is running on the server (Server-Side Rendering).
+ * Required to prevent AsyncStorage errors during web builds.
+ */
 const isSSR = typeof window === 'undefined';
 
+/**
+ * Custom storage adapter for Supabase Auth.
+ * Uses AsyncStorage on mobile/client web, but falls back to returning null during SSR.
+ */
 const customStorage = {
   getItem: (key: string) => {
     if (isSSR) return Promise.resolve(null);
@@ -23,6 +31,10 @@ const customStorage = {
   },
 };
 
+/**
+ * The initialized Supabase client instance used throughout the app.
+ * Configured to automatically refresh tokens and persist sessions using our custom storage.
+ */
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: customStorage,

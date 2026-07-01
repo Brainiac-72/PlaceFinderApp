@@ -12,6 +12,10 @@ interface PremiumCardProps {
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
+/**
+ * A reusable card container with an optional interactive press effect.
+ * When tapped, the card briefly presses inwards with a spring animation.
+ */
 export const PremiumCard: React.FC<PremiumCardProps> = ({
   children,
   onPress,

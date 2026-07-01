@@ -2,12 +2,20 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+/**
+ * Shape of the saved properties store state.
+ */
 interface SavedState {
   savedIds: string[];
   toggleSaved: (id: string) => void;
   isSaved: (id: string) => boolean;
 }
 
+/**
+ * Global Zustand store that manages the user's "Saved" or "Favorited" properties.
+ * It uses the `persist` middleware to automatically save the state to `AsyncStorage`,
+ * ensuring saved items survive app restarts.
+ */
 export const useSavedStore = create<SavedState>()(
   persist(
     (set, get) => ({

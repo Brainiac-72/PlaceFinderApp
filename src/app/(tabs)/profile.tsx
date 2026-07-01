@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Platform } from 'react-native';
 import { useAuth } from '../../providers/AuthProvider';
 import { supabase } from '../../utils/supabase';
 import { User, Shield, CreditCard, HelpCircle, LogOut, Settings, Star, ChevronRight, Moon, Sun } from 'lucide-react-native';
@@ -16,6 +16,10 @@ import { SectionHeader } from '../../components/premium/SectionHeader';
 import { PremiumAvatar } from '../../components/premium/PremiumAvatar';
 import { PremiumCard } from '../../components/premium/PremiumCard';
 
+/**
+ * The user's Profile & Settings dashboard.
+ * Displays quick stats and navigation links to nested settings like Appearance, Security, and Edit Profile.
+ */
 export default function ProfileScreen() {
   const { user, profile: authProfile } = useAuth();
   const { colors, isDark } = useThemeColor();
@@ -26,15 +30,42 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   
   const [chatsCount, setChatsCount] = useState(0);
+  const [listingsCount, setListingsCount] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
-      if (user?.id) {
-        chatService.getUserChats(user.id).then(chats => {
-          setChatsCount(chats.length);
-        });
-      }
-    }, [user?.id])
+      let isMounted = true;
+
+      const fetchStats = async () => {
+        if (!user?.id) return;
+        
+        const chats = await chatService.getUserChats(user.id);
+        if (isMounted) setChatsCount(chats.length);
+
+        if (authProfile?.role === 'landlord') {
+          const { count } = await supabase.from('properties').select('id', { count: 'exact' }).eq('landlord_id', user.id);
+          if (isMounted) setListingsCount(count || 0);
+        }
+      };
+
+      fetchStats();
+
+      if (!user?.id) return;
+
+      const channel = supabase.channel('profile_stats')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'chats' }, () => {
+          fetchStats();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'properties', filter: `landlord_id=eq.${user.id}` }, () => {
+          fetchStats();
+        })
+        .subscribe();
+
+      return () => {
+        isMounted = false;
+        supabase.removeChannel(channel);
+      };
+    }, [user?.id, authProfile?.role])
   );
 
   const handleLogout = () => {
@@ -70,7 +101,7 @@ export default function ProfileScreen() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + (Platform.OS === 'android' ? 15 : 0) }]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         
         {/* Header Section */}
@@ -84,7 +115,9 @@ export default function ProfileScreen() {
                     <View style={styles.badgeRow}>
                         <View style={[styles.premiumBadge, { backgroundColor: colors.primary }]}>
                             <Star size={12} color={colors.badgeText} fill={colors.badgeText} />
-                            <Text style={[styles.premiumText, { color: colors.badgeText }]}>GOLD MEMBER</Text>
+                            <Text style={[styles.premiumText, { color: colors.badgeText }]}>
+                              {authProfile?.role === 'landlord' ? 'VERIFIED LANDLORD' : 'GOLD MEMBER'}
+                            </Text>
                         </View>
                         <Text style={[styles.locationText, { color: colors.textMuted }]}>Accra, Ghana</Text>
                     </View>
@@ -95,8 +128,12 @@ export default function ProfileScreen() {
         {/* Stats Row */}
         <View style={styles.statsRow}>
             <PremiumCard elevated style={styles.statCard}>
-                <Text style={[styles.statVal, { color: colors.text }]}>{savedIds.length}</Text>
-                <Text style={[styles.statLab, { color: colors.textMuted }]}>SAVED</Text>
+                <Text style={[styles.statVal, { color: colors.text }]}>
+                  {authProfile?.role === 'landlord' ? listingsCount : savedIds.length}
+                </Text>
+                <Text style={[styles.statLab, { color: colors.textMuted }]}>
+                  {authProfile?.role === 'landlord' ? 'LISTINGS' : 'SAVED'}
+                </Text>
             </PremiumCard>
             <PremiumCard elevated style={styles.statCard}>
                 <Text style={[styles.statVal, { color: colors.text }]}>{chatsCount}</Text>

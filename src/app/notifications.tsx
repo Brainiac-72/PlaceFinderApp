@@ -9,6 +9,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeOutRight } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 
+/**
+ * The Notifications screen.
+ * Displays a feed of recent alerts/messages fetching from `notificationService`.
+ * Allows users to mark individual or all notifications as read, and delete them.
+ */
 export default function NotificationsScreen() {
   const { session } = useAuth();
   const router = useRouter();

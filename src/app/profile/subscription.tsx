@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useThemeColor } from '../../hooks/useThemeColor';
@@ -7,6 +8,10 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { PremiumButton } from '../../components/premium/PremiumButton';
 import { useCustomAlert } from '../../providers/AlertProvider';
 
+/**
+ * The Subscription Management Screen.
+ * Displays current premium plan benefits and allows users to manage billing or upgrade/cancel plans.
+ */
 export default function SubscriptionScreen() {
   const router = useRouter();
   const { colors } = useThemeColor();
@@ -17,9 +22,12 @@ export default function SubscriptionScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+    <View style={[styles.safeArea, { backgroundColor: colors.background, paddingTop: insets.top + (Platform.OS === 'android' ? 15 : 0) }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity 
+          onPress={() => router.navigate('/profile')} 
+          style={styles.backBtn}
+        >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Subscription</Text>
@@ -76,7 +84,7 @@ export default function SubscriptionScreen() {
         </Animated.View>
 
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

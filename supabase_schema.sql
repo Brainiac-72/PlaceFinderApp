@@ -4,7 +4,7 @@ create table public.profiles (
   username text unique,
   full_name text,
   avatar_url text,
-  role text check (role in ('owner', 'seeker', 'admin')) default 'seeker',
+  role text check (role in ('landlord', 'seeker', 'admin')) default 'seeker',
   phone_number text
 );
 
@@ -41,7 +41,7 @@ $$ language plpgsql security definer;
 create table public.properties (
   id uuid default gen_random_uuid() primary key,
   created_at timestamp with time zone default now(),
-  owner_id uuid references public.profiles(id) not null,
+  landlord_id uuid references public.profiles(id) not null,
   title text not null,
   description text,
   price numeric not null,
@@ -60,17 +60,17 @@ create policy "Properties are viewable by everyone."
   on public.properties for select
   using ( true );
 
-create policy "Owners can insert their own properties."
+create policy "Landlords can insert their own properties."
   on public.properties for insert
-  with check ( auth.uid() = owner_id );
+  with check ( auth.uid() = landlord_id AND exists (select 1 from public.profiles where id = auth.uid() and role = 'landlord') );
 
-create policy "Owners can update own properties."
+create policy "Landlords can update own properties."
   on public.properties for update
-  using ( auth.uid() = owner_id );
+  using ( auth.uid() = landlord_id AND exists (select 1 from public.profiles where id = auth.uid() and role = 'landlord') );
 
-create policy "Owners can delete own properties."
+create policy "Landlords can delete own properties."
   on public.properties for delete
-  using ( auth.uid() = owner_id );
+  using ( auth.uid() = landlord_id AND exists (select 1 from public.profiles where id = auth.uid() and role = 'landlord') );
 
 create trigger on_auth_user_created
   after insert on auth.users
@@ -160,17 +160,17 @@ create table public.chats (
   id uuid default gen_random_uuid() primary key,
   property_id uuid references public.properties(id) on delete cascade not null,
   seeker_id uuid references public.profiles(id) not null,
-  owner_id uuid references public.profiles(id) not null,
+  landlord_id uuid references public.profiles(id) not null,
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
 );
 
 alter table public.chats enable row level security;
 
--- A user can see a chat if they are either the seeker or the owner
+-- A user can see a chat if they are either the seeker or the landlord
 create policy "Users can view their own chats"
   on public.chats for select
-  using ( auth.uid() = seeker_id or auth.uid() = owner_id );
+  using ( auth.uid() = seeker_id or auth.uid() = landlord_id );
 
 -- A user can create a chat if they are the seeker
 create policy "Seekers can create chats"
@@ -194,7 +194,7 @@ create policy "Users can view messages in their chats"
   using (
     exists (
       select 1 from public.chats c
-      where c.id = chat_id and (c.seeker_id = auth.uid() or c.owner_id = auth.uid())
+      where c.id = chat_id and (c.seeker_id = auth.uid() or c.landlord_id = auth.uid())
     )
   );
 
@@ -205,7 +205,7 @@ create policy "Users can send messages in their chats"
     auth.uid() = sender_id and
     exists (
       select 1 from public.chats c
-      where c.id = chat_id and (c.seeker_id = auth.uid() or c.owner_id = auth.uid())
+      where c.id = chat_id and (c.seeker_id = auth.uid() or c.landlord_id = auth.uid())
     )
   );
 
@@ -215,7 +215,7 @@ create policy "Users can update messages in their chats"
   using (
     exists (
       select 1 from public.chats c
-      where c.id = chat_id and (c.seeker_id = auth.uid() or c.owner_id = auth.uid())
+      where c.id = chat_id and (c.seeker_id = auth.uid() or c.landlord_id = auth.uid())
     )
   );
 

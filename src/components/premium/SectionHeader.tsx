@@ -9,6 +9,10 @@ interface SectionHeaderProps {
   light?: boolean;
 }
 
+/**
+ * A clean, typographic header component used to title sections of a screen.
+ * Automatically adapts text color to the current theme.
+ */
 export const SectionHeader: React.FC<SectionHeaderProps> = ({
   title,
   subtitle,

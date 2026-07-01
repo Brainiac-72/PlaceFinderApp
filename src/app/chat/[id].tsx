@@ -49,11 +49,16 @@ import { supabase } from "../../utils/supabase";
 
 const { width } = Dimensions.get("window");
 
+/**
+ * The individual Chat Room screen.
+ * Handles real-time messaging via Supabase subscriptions, message attachments (properties),
+ * and optimistic UI updates for instant feedback.
+ */
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
-  const { colors } = useThemeColor();
+  const { colors, isDark } = useThemeColor();
   const insets = useSafeAreaInsets();
 
   const [session, setSession] = useState<ChatSession | null>(null);
@@ -61,7 +66,7 @@ export default function ChatScreen() {
   const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const [ownerProperties, setOwnerProperties] = useState<any[]>([]);
+  const [landlordProperties, setLandlordProperties] = useState<any[]>([]);
   const bottomSheetModalRef = useRef<BottomSheetModal>(null);
   const flatListRef = useRef<FlatList>(null);
 
@@ -77,9 +82,9 @@ export default function ChatScreen() {
       const msgs = await chatService.getMessages(id);
       setMessages(msgs);
       const allProps = await propertyService.getAllProperties();
-      if (chatDetails?.owner_id)
-        setOwnerProperties(
-          allProps.filter((p) => p.owner_id === chatDetails.owner_id),
+      if (chatDetails?.landlord_id)
+        setLandlordProperties(
+          allProps.filter((p) => p.landlord_id === chatDetails.landlord_id),
         );
       setLoading(false);
       setTimeout(
@@ -137,7 +142,7 @@ export default function ChatScreen() {
       is_read: false,
       created_at: new Date().toISOString(),
       attached_property_id: attachedPropertyId,
-      attached_property: ownerProperties.find(
+      attached_property: landlordProperties.find(
         (p) => p.id === attachedPropertyId,
       ),
     };
@@ -171,7 +176,7 @@ export default function ChatScreen() {
         style={[
           styles.container,
           {
-            backgroundColor: "#0A0F1E",
+            backgroundColor: colors.background,
             justifyContent: "center",
             alignItems: "center",
           },
@@ -183,33 +188,33 @@ export default function ChatScreen() {
   }
 
   const otherProfile =
-    user?.id === session?.owner_id ? session?.seeker : session?.owner;
+    user?.id === session?.landlord_id ? session?.seeker : session?.landlord;
 
   return (
-    <View style={[styles.container, { backgroundColor: "#0A0F1E" }]}>
-      <StatusBar barStyle="light-content" />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        behavior={Platform.OS === "ios" ? "padding" : "padding"}
+        keyboardVerticalOffset={0}
       >
         {/* Premium Header */}
         <BlurView
           intensity={100}
-          tint="dark"
-          style={[styles.header, { paddingTop: insets.top + 10 }]}
+          tint={isDark ? "dark" : "light"}
+          style={[styles.header, { paddingTop: insets.top + 10, borderBottomColor: colors.border }]}
         >
           <TouchableOpacity
             onPress={() => router.back()}
             style={styles.headerBtn}
           >
-            <ChevronLeft size={24} color="#FFF" />
+            <ChevronLeft size={24} color={colors.text} />
           </TouchableOpacity>
 
           <View style={styles.headerMain}>
             <PremiumAvatar size={40} online={true} />
             <View style={styles.headerInfo}>
-              <Text style={styles.headerName}>
+              <Text style={[styles.headerName, { color: colors.text }]}>
                 {otherProfile?.full_name || "Premium Client"}
               </Text>
               <Text style={styles.headerStatus}>Concierge Active</Text>
@@ -217,15 +222,15 @@ export default function ChatScreen() {
           </View>
 
           <TouchableOpacity style={styles.headerBtn}>
-            <Info size={20} color="#6B7280" />
+            <Info size={20} color={colors.textMuted} />
           </TouchableOpacity>
         </BlurView>
 
         {/* Property Context */}
         {session?.property && (
-          <View style={styles.contextWrapper}>
+          <View style={[styles.contextWrapper, { backgroundColor: isDark ? "rgba(10,15,30,0.5)" : "rgba(255,255,255,0.5)" }]}>
             <TouchableOpacity
-              style={styles.contextCard}
+              style={[styles.contextCard, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => router.push(`/property/${session.property.id}`)}
             >
               <Image
@@ -233,14 +238,14 @@ export default function ChatScreen() {
                 style={styles.contextImg}
               />
               <View style={styles.contextInfo}>
-                <Text style={styles.contextLabel}>REFERENCING PROPERTY</Text>
-                <Text style={styles.contextTitle} numberOfLines={1}>
+                <Text style={[styles.contextLabel, { color: colors.textMuted }]}>REFERENCING PROPERTY</Text>
+                <Text style={[styles.contextTitle, { color: colors.text }]} numberOfLines={1}>
                   {session.property.title}
                 </Text>
               </View>
               <ChevronLeft
                 size={16}
-                color="#6B7280"
+                color={colors.textMuted}
                 style={{ transform: [{ rotate: "180deg" }] }}
               />
             </TouchableOpacity>
@@ -251,8 +256,10 @@ export default function ChatScreen() {
           ref={flatListRef}
           data={messages}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={[styles.messageList, { paddingBottom: 100 }]}
+          style={{ flex: 1 }}
+          contentContainerStyle={[styles.messageList, { paddingBottom: 20 }]}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => {
             const isMe = item.sender_id === user?.id;
             const hasAttachment = !!item.attached_property;
@@ -267,13 +274,13 @@ export default function ChatScreen() {
                 <View
                   style={[
                     styles.bubble,
-                    isMe ? styles.bubbleMe : styles.bubbleThem,
+                    isMe ? styles.bubbleMe : [styles.bubbleThem, { backgroundColor: colors.card, borderColor: colors.border }],
                     hasAttachment && { padding: 4, width: 260 },
                   ]}
                 >
                   {hasAttachment && (
                     <TouchableOpacity
-                      style={styles.attachmentCard}
+                      style={[styles.attachmentCard, { backgroundColor: colors.surface }]}
                       onPress={() =>
                         router.push(`/property/${item.attached_property.id}`)
                       }
@@ -286,7 +293,7 @@ export default function ChatScreen() {
                         <Text
                           style={[
                             styles.attachmentTitle,
-                            { color: isMe ? "#0A0F1E" : "#F9FAFB" },
+                            { color: isMe ? "#0A0F1E" : colors.text },
                           ]}
                           numberOfLines={1}
                         >
@@ -310,7 +317,7 @@ export default function ChatScreen() {
                     <Text
                       style={[
                         styles.msgText,
-                        { color: isMe ? "#0A0F1E" : "#F9FAFB" },
+                        { color: isMe ? "#0A0F1E" : colors.text },
                         hasAttachment && { padding: 12 },
                       ]}
                     >
@@ -329,23 +336,23 @@ export default function ChatScreen() {
         {/* Premium Input */}
         <BlurView
           intensity={100}
-          tint="dark"
+          tint={isDark ? "dark" : "light"}
           style={[
             styles.inputBar,
-            { paddingBottom: Math.max(insets.bottom, 20) },
+            { paddingBottom: Math.max(insets.bottom, 20), borderTopColor: colors.border },
           ]}
         >
           <TouchableOpacity
             style={styles.attachBtn}
             onPress={() => bottomSheetModalRef.current?.present()}
           >
-            <Plus size={24} color="#9CA3AF" />
+            <Plus size={24} color={colors.textSecondary} />
           </TouchableOpacity>
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
             placeholder="Message concierge..."
-            placeholderTextColor="#6B7280"
+            placeholderTextColor={colors.textMuted}
             value={inputText}
             onChangeText={setInputText}
             multiline
@@ -361,7 +368,7 @@ export default function ChatScreen() {
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={styles.cameraBtn}>
-              <Camera size={22} color="#9CA3AF" />
+              <Camera size={22} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </BlurView>
@@ -372,18 +379,18 @@ export default function ChatScreen() {
         ref={bottomSheetModalRef}
         snapPoints={snapPoints}
         backdropComponent={renderBackdrop}
-        backgroundStyle={{ backgroundColor: "#111827", borderRadius: 32 }}
-        handleIndicatorStyle={{ backgroundColor: "#374151", width: 40 }}
+        backgroundStyle={{ backgroundColor: colors.card, borderRadius: 32 }}
+        handleIndicatorStyle={{ backgroundColor: colors.border, width: 40 }}
       >
         <BottomSheetView style={styles.sheetContent}>
-          <Text style={styles.sheetTitle}>Share Property</Text>
+          <Text style={[styles.sheetTitle, { color: colors.text }]}>Share Property</Text>
           <BottomSheetFlatList
-            data={ownerProperties}
+            data={landlordProperties}
             keyExtractor={(i) => i.id}
             contentContainerStyle={{ padding: 20 }}
             renderItem={({ item }) => (
               <TouchableOpacity
-                style={styles.sheetItem}
+                style={[styles.sheetItem, { backgroundColor: colors.surface }]}
                 onPress={() => handleSend(item.id)}
               >
                 <Image
@@ -391,7 +398,7 @@ export default function ChatScreen() {
                   style={styles.sheetItemImg}
                 />
                 <View style={{ flex: 1, marginLeft: 16 }}>
-                  <Text style={styles.sheetItemTitle} numberOfLines={1}>
+                  <Text style={[styles.sheetItemTitle, { color: colors.text }]} numberOfLines={1}>
                     {item.title}
                   </Text>
                   <Text style={styles.sheetItemPrice}>
@@ -416,7 +423,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.05)",
   },
   headerBtn: {
     width: 40,
@@ -432,35 +438,31 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   headerInfo: { flex: 1 },
-  headerName: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#F9FAFB" },
+  headerName: { fontSize: 16, fontFamily: "Inter_700Bold" },
   headerStatus: {
     fontSize: 11,
     fontFamily: "Inter_400Regular",
     color: "#10B981",
     marginTop: 2,
   },
-  contextWrapper: { padding: 16, backgroundColor: "rgba(10,15,30,0.5)" },
+  contextWrapper: { padding: 16 },
   contextCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#111827",
     padding: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#1F2937",
   },
   contextImg: { width: 40, height: 40, borderRadius: 6 },
   contextInfo: { flex: 1, marginLeft: 12 },
   contextLabel: {
     fontSize: 9,
     fontFamily: "Inter_700Bold",
-    color: "#6B7280",
     letterSpacing: 0.5,
   },
   contextTitle: {
     fontSize: 13,
     fontFamily: "Inter_600SemiBold",
-    color: "#F9FAFB",
   },
   messageList: { padding: 20, gap: 16 },
   messageRow: { flexDirection: "row", width: "100%" },
@@ -474,16 +476,13 @@ const styles = StyleSheet.create({
   },
   bubbleMe: { backgroundColor: "#F59E0B", borderBottomRightRadius: 4 },
   bubbleThem: {
-    backgroundColor: "#111827",
     borderBottomLeftRadius: 4,
     borderWidth: 1,
-    borderColor: "#1F2937",
   },
   msgText: { fontSize: 15, fontFamily: "Inter_400Regular", lineHeight: 22 },
   attachmentCard: {
     borderRadius: 16,
     overflow: "hidden",
-    backgroundColor: "rgba(0,0,0,0.05)",
   },
   attachmentImg: { width: "100%", height: 140 },
   attachmentInfo: { padding: 12 },
@@ -494,16 +493,11 @@ const styles = StyleSheet.create({
   },
   attachmentPrice: { fontSize: 13, fontFamily: "Inter_700Bold" },
   inputBar: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.05)",
   },
   attachBtn: {
     width: 44,
@@ -513,11 +507,9 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    backgroundColor: "#111827",
     borderRadius: 22,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    color: "#F9FAFB",
     fontSize: 15,
     fontFamily: "Inter_400Regular",
     maxHeight: 100,
@@ -541,13 +533,11 @@ const styles = StyleSheet.create({
   sheetTitle: {
     fontSize: 20,
     fontFamily: "PlayfairDisplay_700Bold",
-    color: "#F9FAFB",
     marginBottom: 20,
   },
   sheetItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1F2937",
     padding: 12,
     borderRadius: 16,
     marginBottom: 12,
@@ -556,7 +546,6 @@ const styles = StyleSheet.create({
   sheetItemTitle: {
     fontSize: 14,
     fontFamily: "Inter_600SemiBold",
-    color: "#F9FAFB",
   },
   sheetItemPrice: {
     fontSize: 13,

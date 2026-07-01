@@ -15,6 +15,11 @@ interface GoogleAuthButtonProps {
   onFailure?: (error: any) => void;
 }
 
+/**
+ * A styled button component that triggers Google OAuth authentication via Supabase.
+ * It opens the authentication session securely in an in-app browser and handles
+ * the redirect logic, successfully extracting and exchanging tokens.
+ */
 export const GoogleAuthButton: React.FC<GoogleAuthButtonProps> = ({ onSuccess, onFailure }) => {
   const [loading, setLoading] = useState(false);
   const { colors, isDark } = useThemeColor();

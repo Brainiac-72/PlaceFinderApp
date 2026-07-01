@@ -9,6 +9,10 @@ export type ThemedViewProps = ViewProps & {
   type?: ThemeColor;
 };
 
+/**
+ * A wrapper around the React Native View component that auto-injects
+ * the correct background color depending on the active theme mode.
+ */
 export function ThemedView({ style, lightColor, darkColor, type, ...otherProps }: ThemedViewProps) {
   const theme = useTheme();
 

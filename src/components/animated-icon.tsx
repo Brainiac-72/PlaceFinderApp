@@ -7,6 +7,10 @@ import { scheduleOnRN } from 'react-native-worklets';
 const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
 const DURATION = 600;
 
+/**
+ * Component responsible for transitioning away the native splash screen smoothly.
+ * It animates out the solid background color to reveal the app content.
+ */
 export function AnimatedSplashOverlay() {
   const [visible, setVisible] = useState(true);
 
@@ -80,6 +84,10 @@ const glowKeyframe = new Keyframe({
   },
 });
 
+/**
+ * An animated logo icon component specifically designed for the splash screen.
+ * It handles the glowing background, the logo scale-in, and continuous rotation.
+ */
 export function AnimatedIcon() {
   return (
     <View style={styles.iconContainer}>

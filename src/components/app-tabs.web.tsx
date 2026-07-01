@@ -8,7 +8,7 @@ import {
 } from 'expo-router/ui';
 import { SymbolView } from 'expo-symbols';
 import React from 'react';
-import { Pressable, useColorScheme, View, StyleSheet } from 'react-native';
+import { Pressable, useColorScheme, View, StyleSheet, Platform } from 'react-native';
 
 import { ExternalLink } from './external-link';
 import { ThemedText } from './themed-text';
@@ -16,6 +16,12 @@ import { ThemedView } from './themed-view';
 
 import { Colors, MaxContentWidth, Spacing } from '@/constants/theme';
 
+/**
+ * AppTabs Component
+ * Main wrapper for the web navigation tabs, acting as a layout definition.
+ * It renders the TabSlot (which shows the active screen's content)
+ * and the TabList containing navigation links.
+ */
 export default function AppTabs() {
   return (
     <Tabs>
@@ -34,6 +40,11 @@ export default function AppTabs() {
   );
 }
 
+/**
+ * TabButton Component
+ * Represents an individual interactive tab item inside the custom tab list.
+ * Reacts to focus and press states with visual changes.
+ */
 export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps) {
   return (
     <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
@@ -48,9 +59,15 @@ export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps
   );
 }
 
+/**
+ * CustomTabList Component
+ * A stylized navigation bar that holds all the TabButtons.
+ * Includes app branding and an external documentation link.
+ * Adapts its theme (light/dark) dynamically.
+ */
 export function CustomTabList(props: TabListProps) {
   const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const colors = Colors[scheme ?? 'light'];
 
   return (
     <View {...props} style={styles.tabListContainer}>
@@ -66,7 +83,7 @@ export function CustomTabList(props: TabListProps) {
             <ThemedText type="link">Docs</ThemedText>
             <SymbolView
               tintColor={colors.text}
-              name={{ ios: 'arrow.up.right.square', web: 'link' }}
+              name={Platform.select({ ios: 'arrow.up.right.square', default: 'link' }) as any}
               size={12}
             />
           </Pressable>
