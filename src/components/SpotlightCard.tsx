@@ -1,27 +1,24 @@
 import React, { memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { MapPin, Star } from 'lucide-react-native';
+import { Heart, Star } from 'lucide-react-native';
 import { useThemeColor } from '../hooks/useThemeColor';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import { Property } from '../utils/propertyUtils';
-import { PremiumBadge } from './premium/PremiumBadge';
+import { useSavedStore } from '../store/useSavedStore';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width - 48;
+const CARD_WIDTH = width * 0.7; // As per the image ratio
 
 interface SpotlightCardProps {
   property: Property;
   onPress: () => void;
 }
 
-/**
- * A large, visually prominent card used for featured or 'Spotlight' properties.
- * Designed to be swiped through in a horizontal carousel at the top of the Home feed.
- */
 const SpotlightCard = ({ property, onPress }: SpotlightCardProps) => {
   const { colors } = useThemeColor();
+  const isSaved = useSavedStore(state => state.isSaved(property.id));
+  const toggleSaved = useSavedStore(state => state.toggleSaved);
 
   return (
     <TouchableOpacity 
@@ -30,42 +27,45 @@ const SpotlightCard = ({ property, onPress }: SpotlightCardProps) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         onPress();
       }}
-      style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
+      style={styles.container}
     >
-      <Image 
-        source={{ uri: property.imageUrl }} 
-        style={styles.image} 
-        contentFit="cover"
-        transition={300}
-      />
-      
-      <View style={styles.badgeContainer}>
-        <View style={styles.premiumBadge}>
-          <Star size={12} color="#F59E0B" fill="#F59E0B" />
-          <Text style={styles.premiumText}>SPOTLIGHT</Text>
-        </View>
+      <View style={styles.imageContainer}>
+        <Image 
+          source={{ uri: property.imageUrl }} 
+          style={styles.image} 
+          contentFit="cover"
+          transition={300}
+        />
+        <TouchableOpacity 
+          style={styles.heartCircle}
+          activeOpacity={0.7}
+          onPress={(e) => {
+            e.stopPropagation();
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            toggleSaved(property.id);
+          }}
+        >
+          <Heart 
+            size={18} 
+            color={isSaved ? '#EF4444' : '#000'} 
+            fill={isSaved ? '#EF4444' : 'transparent'} 
+          />
+        </TouchableOpacity>
       </View>
 
-      <LinearGradient
-        colors={['transparent', 'rgba(10,15,30,0.95)']}
-        style={styles.gradient}
-      >
-        <View style={styles.infoContainer}>
-          <Text style={styles.title} numberOfLines={1}>{property.title}</Text>
-          
-          <View style={styles.bottomRow}>
-            <View style={styles.locationRow}>
-              <MapPin size={16} color="#F59E0B" />
-              <Text style={styles.locationText} numberOfLines={1}>{property.location}</Text>
-            </View>
-            <View style={[styles.priceTag, { backgroundColor: '#F59E0B' }]}>
-                <Text style={styles.priceText}>
-                    {property.currency}{property.price.toLocaleString()}
-                </Text>
-            </View>
-          </View>
+      <View style={styles.infoContainer}>
+        <View style={styles.ratingRow}>
+          <Star size={14} color="#FF6B00" fill="#FF6B00" />
+          <Text style={[styles.ratingText, { color: colors.text }]}>4.9</Text>
+          <Text style={styles.reviewsText}>(12)</Text>
         </View>
-      </LinearGradient>
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+          {property.title}
+        </Text>
+        <Text style={[styles.price, { color: colors.text }]}>
+          {property.currency}{property.price} <Text style={styles.perDay}>/ day</Text>
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 };
@@ -73,89 +73,71 @@ const SpotlightCard = ({ property, onPress }: SpotlightCardProps) => {
 const styles = StyleSheet.create({
   container: {
     width: CARD_WIDTH,
-    height: 380,
-    borderRadius: 24,
     marginRight: 16,
+  },
+  imageContainer: {
+    width: '100%',
+    aspectRatio: 1.3,
+    borderRadius: 20,
     overflow: 'hidden',
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.4,
-    shadowRadius: 24,
-    elevation: 10,
+    marginBottom: 12,
+    position: 'relative',
   },
   image: {
     width: '100%',
     height: '100%',
   },
-  badgeContainer: {
+  heartCircle: {
     position: 'absolute',
-    top: 20,
-    left: 20,
-    zIndex: 2,
-  },
-  premiumBadge: {
-    flexDirection: 'row',
+    top: 12,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(10,15,30,0.8)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.3)',
-    gap: 6,
-  },
-  premiumText: {
-    color: '#F59E0B',
-    fontSize: 10,
-    fontFamily: 'Inter_700Bold',
-    fontWeight: '700',
-    letterSpacing: 1.5,
-  },
-  gradient: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '60%',
-    justifyContent: 'flex-end',
-    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   infoContainer: {
-    gap: 12,
+    gap: 4,
+    paddingHorizontal: 2,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 2,
+  },
+  ratingText: {
+    fontSize: 14,
+    fontFamily: 'Outfit_700Bold',
+    fontWeight: '700',
+  },
+  reviewsText: {
+    fontSize: 14,
+    fontFamily: 'Outfit_400Regular',
+    color: '#6B7280',
   },
   title: {
-    color: '#F9FAFB',
-    fontSize: 28,
-    fontFamily: 'PlayfairDisplay_700Bold',
-    letterSpacing: -0.5,
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flex: 1,
-  },
-  locationText: {
-    color: '#9CA3AF',
-    fontSize: 15,
-    fontFamily: 'Inter_400Regular',
-  },
-  priceTag: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
-  },
-  priceText: {
-    color: '#0A0F1E',
     fontSize: 16,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Outfit_700Bold',
     fontWeight: '700',
+  },
+  price: {
+    fontSize: 16,
+    fontFamily: 'Outfit_700Bold',
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  perDay: {
+    fontFamily: 'Outfit_400Regular',
+    color: '#6B7280',
+    fontWeight: '400',
   },
 });
 

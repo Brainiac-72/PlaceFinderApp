@@ -1,8 +1,8 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { BlurView } from 'expo-blur';
+
 import { Platform, StyleSheet, View } from 'react-native';
-import { Home, Bookmark, Plus, MessageCircle, UserCircle } from 'lucide-react-native';
+import { Home, Heart, CalendarDays, MessageCircle, User, PlusCircle } from 'lucide-react-native';
 import { useThemeColor } from '../../hooks/useThemeColor';
 import { useAuth } from '../../providers/AuthProvider';
 
@@ -19,14 +19,11 @@ export default function TabLayout() {
     <Tabs 
       screenOptions={{ 
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.tabBarInactive,
+        tabBarActiveTintColor: '#006A4E',
+        tabBarInactiveTintColor: '#9CA3AF',
         tabBarShowLabel: false,
         tabBarBackground: () => (
-          <View style={[StyleSheet.absoluteFill, { borderRadius: 0, overflow: 'hidden' }]}>
-            <BlurView tint={isDark ? "dark" : "light"} intensity={100} style={StyleSheet.absoluteFill} />
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay, borderTopWidth: 1, borderTopColor: 'rgba(245, 158, 11, 0.15)' }]} />
-          </View>
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? '#111827' : '#FFFFFF', borderTopWidth: 1, borderTopColor: isDark ? '#374151' : '#F3F4F6' }]} />
         ),
         tabBarStyle: {
           position: 'absolute',
@@ -40,7 +37,7 @@ export default function TabLayout() {
           borderTopWidth: 0,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.3,
+          shadowOpacity: 0.1,
           shadowRadius: 12,
         },
         tabBarItemStyle: {
@@ -55,8 +52,8 @@ export default function TabLayout() {
         options={{ 
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconContainer, focused && { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
-              <Home size={24} color={color} strokeWidth={focused ? 2.5 : 2} />
+            <View style={[styles.iconContainer, focused && { backgroundColor: isDark ? 'rgba(0, 168, 107, 0.2)' : '#E8F7F2' }]}>
+              <Home size={24} color={color} strokeWidth={2} fill={focused ? color : 'transparent'} />
             </View>
           )
         }} 
@@ -66,8 +63,8 @@ export default function TabLayout() {
         options={{ 
           title: 'Saved',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconContainer, focused && { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
-              <Bookmark size={24} color={color} strokeWidth={focused ? 2.5 : 2} fill={focused ? '#F59E0B' : 'transparent'} />
+            <View style={[styles.iconContainer, focused && { backgroundColor: isDark ? 'rgba(0, 168, 107, 0.2)' : '#E8F7F2' }]}>
+              <Heart size={24} color={color} strokeWidth={2} fill={focused ? color : 'transparent'} />
             </View>
           )
         }} 
@@ -77,9 +74,9 @@ export default function TabLayout() {
         options={{ 
           title: 'Post',
           href: isLandlord ? '/post' : null,
-          tabBarIcon: ({ focused }) => (
-            <View style={styles.postButton}>
-              <Plus size={32} color={colors.badgeText} strokeWidth={3} />
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconContainer, focused && { backgroundColor: isDark ? 'rgba(0, 168, 107, 0.2)' : '#E8F7F2' }]}>
+              <PlusCircle size={24} color={color} strokeWidth={2} />
             </View>
           )
         }} 
@@ -89,20 +86,20 @@ export default function TabLayout() {
         options={{ 
           title: 'Inbox',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconContainer, focused && { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
-              <MessageCircle size={24} color={color} strokeWidth={focused ? 2.5 : 2} />
+            <View style={[styles.iconContainer, focused && { backgroundColor: isDark ? 'rgba(0, 168, 107, 0.2)' : '#E8F7F2' }]}>
+              <MessageCircle size={24} color={color} strokeWidth={2} />
+              <View style={[styles.notificationDot, { borderColor: isDark ? '#111827' : '#FFFFFF' }]} />
             </View>
           )
         }} 
       />
-
       <Tabs.Screen 
         name="profile" 
         options={{ 
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconContainer, focused && { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
-              <UserCircle size={24} color={color} strokeWidth={focused ? 2.5 : 2} />
+            <View style={[styles.iconContainer, focused && { backgroundColor: isDark ? 'rgba(0, 168, 107, 0.2)' : '#E8F7F2' }]}>
+              <User size={24} color={color} strokeWidth={2} />
             </View>
           )
         }} 
@@ -119,19 +116,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  postButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#F59E0B',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#F59E0B',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
-    marginTop: -10,
+  notificationDot: {
+    position: 'absolute',
+    top: 10,
+    right: 8,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#F97316',
+    borderWidth: 2,
   }
 });
 

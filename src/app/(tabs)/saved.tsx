@@ -12,8 +12,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { FlashList } from '@shopify/flash-list';
 import * as Haptics from 'expo-haptics';
-import { SectionHeader } from '../../components/premium/SectionHeader';
-import { PremiumButton } from '../../components/premium/PremiumButton';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { Button } from '../../components/ui/Button';
 
 /**
  * The Saved Properties (Favorites) screen.
@@ -68,18 +68,18 @@ export default function SavedScreen() {
 
   if (savedProperties.length === 0 && !loading) {
     return (
-      <View style={[styles.emptyContainer, { backgroundColor: '#0A0F1E' }]}>
-        <View style={styles.emptyIconCircle}>
-          <Heart size={48} color="#F59E0B" fill="rgba(245, 158, 11, 0.1)" strokeWidth={1.5} />
+      <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
+        <View style={[styles.emptyIconCircle, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Heart size={48} color="#0066FF" fill="rgba(0, 102, 255, 0.1)" strokeWidth={1.5} />
         </View>
         <Text style={styles.emptyTitle}>Curate Your Collection</Text>
         <Text style={styles.emptySubtitle}>
           Save properties you love to compare them later or share them with friends.
         </Text>
-        <PremiumButton 
+        <Button 
           title="Explore Spaces" 
           onPress={() => router.push('/(tabs)')} 
-          icon={<Home size={20} color="#0A0F1E" />}
+          icon={<Home size={20} color={colors.background} />}
           style={{ width: '100%', marginTop: 12 }}
         />
       </View>
@@ -87,8 +87,8 @@ export default function SavedScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: '#0A0F1E', paddingTop: insets.top + (Platform.OS === 'android' ? 15 : 0) }]}>
-      <StatusBar barStyle="light-content" />
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + (Platform.OS === 'android' ? 15 : 0) }]}>
+      <StatusBar barStyle={colors.background === '#000000' || colors.background === '#0A0F1E' ? "light-content" : "dark-content"} />
       <View style={styles.header}>
         <SectionHeader 
           title="Saved Collection" 
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { paddingHorizontal: 24, paddingTop: 20 },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
-  emptyIconCircle: { width: 120, height: 120, borderRadius: 60, backgroundColor: '#111827', justifyContent: 'center', alignItems: 'center', marginBottom: 32, borderWidth: 1, borderColor: '#1F2937' },
+  emptyIconCircle: { width: 120, height: 120, borderRadius: 60, justifyContent: 'center', alignItems: 'center', marginBottom: 32, borderWidth: 1 },
   emptyTitle: { fontSize: 24, fontFamily: 'PlayfairDisplay_700Bold', color: '#F9FAFB', marginBottom: 16, textAlign: 'center' },
-  emptySubtitle: { fontSize: 16, fontFamily: 'Inter_400Regular', color: '#9CA3AF', textAlign: 'center', lineHeight: 26, marginBottom: 40 },
+  emptySubtitle: { fontSize: 16, fontFamily: 'Outfit_400Regular', color: '#9CA3AF', textAlign: 'center', lineHeight: 26, marginBottom: 40 },
 });

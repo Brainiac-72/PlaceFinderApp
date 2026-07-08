@@ -9,7 +9,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
 import Toast from 'react-native-toast-message';
 import { AMENITIES } from '../../constants/Amenities';
-import { BlurView } from 'expo-blur';
+
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
@@ -364,11 +364,7 @@ export default function PostPropertyScreen() {
       </KeyboardAvoidingView>
 
       {/* Floating Bottom Action */}
-      <BlurView 
-        tint={isDark ? "dark" : "light"} 
-        intensity={90} 
-        style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 100) }]}
-      >
+      <View style={[styles.bottomBar, { backgroundColor: isDark ? 'rgba(10,15,30,0.95)' : 'rgba(255,255,255,0.95)', paddingBottom: Math.max(insets.bottom, 100) }]}>
         <TouchableOpacity 
           style={[styles.submitBtn, { backgroundColor: colors.primary }]} 
           activeOpacity={0.8}
@@ -381,7 +377,7 @@ export default function PostPropertyScreen() {
             <Text style={styles.submitBtnText}>Publish Listing</Text>
           )}
         </TouchableOpacity>
-      </BlurView>
+      </View>
     </View>
   );
 }

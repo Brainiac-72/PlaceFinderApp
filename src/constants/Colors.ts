@@ -10,8 +10,8 @@ export const Colors = {
     text: '#111827',
     textSecondary: '#4B5563',
     textMuted: '#9CA3AF',
-    primary: '#F59E0B', // Gold/Amber
-    accentHover: '#D97706',
+    primary: '#0066FF', // Vibrant Blue
+    accentHover: '#0052CC',
     border: '#E5E7EB',
     tabBar: '#FFFFFF',
     tabBarInactive: '#9CA3AF',
@@ -28,8 +28,8 @@ export const Colors = {
     text: '#F9FAFB', // Near White
     textSecondary: '#9CA3AF', // Muted Gray
     textMuted: '#6B7280', // Very Subtle
-    primary: '#F59E0B', // Gold/Amber
-    accentHover: '#D97706',
+    primary: '#0066FF', // Vibrant Blue
+    accentHover: '#0052CC',
     border: '#374151', // Subtle Dividers
     tabBar: '#0A0F1E',
     tabBarInactive: '#6B7280',

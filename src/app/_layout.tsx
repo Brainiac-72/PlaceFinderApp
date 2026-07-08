@@ -17,7 +17,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts, Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold, Outfit_800ExtraBold } from '@expo-google-fonts/outfit';
-import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
+
 import { PlayfairDisplay_700Bold, PlayfairDisplay_900Black, PlayfairDisplay_400Regular } from '@expo-google-fonts/playfair-display';
 
 SplashScreen.preventAutoHideAsync();
@@ -49,10 +49,7 @@ function RootLayoutNav() {
     Outfit_600SemiBold,
     Outfit_700Bold,
     Outfit_800ExtraBold,
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
+
     PlayfairDisplay_700Bold,
     PlayfairDisplay_900Black,
     PlayfairDisplay_400Regular,
@@ -120,16 +117,16 @@ const toastConfig = {
   success: (props: any) => (
     <BaseToast
       {...props}
-      style={{ borderLeftColor: '#F59E0B', backgroundColor: '#111827', borderRadius: 12, shadowOpacity: 0.3, elevation: 6 }}
+      style={{ borderLeftColor: '#0066FF', backgroundColor: '#111827', borderRadius: 12, shadowOpacity: 0.3, elevation: 6 }}
       contentContainerStyle={{ paddingHorizontal: 15 }}
       text1Style={{
         fontSize: 15,
-        fontFamily: 'Inter_700Bold',
+        fontFamily: 'Outfit_700Bold',
         color: '#F9FAFB'
       }}
       text2Style={{
         fontSize: 13,
-        fontFamily: 'Inter_400Regular',
+        fontFamily: 'Outfit_400Regular',
         color: '#9CA3AF'
       }}
     />
@@ -141,12 +138,12 @@ const toastConfig = {
       contentContainerStyle={{ paddingHorizontal: 15 }}
       text1Style={{
         fontSize: 15,
-        fontFamily: 'Inter_700Bold',
+        fontFamily: 'Outfit_700Bold',
         color: '#F9FAFB'
       }}
       text2Style={{
         fontSize: 13,
-        fontFamily: 'Inter_400Regular',
+        fontFamily: 'Outfit_400Regular',
         color: '#EF4444'
       }}
     />

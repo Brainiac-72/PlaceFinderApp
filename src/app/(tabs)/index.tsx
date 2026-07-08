@@ -16,8 +16,8 @@ import { combineWithDummyData } from '../../utils/propertyUtils';
 import { FlashList } from '@shopify/flash-list';
 import * as Haptics from 'expo-haptics';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
-import { SectionHeader } from '../../components/premium/SectionHeader';
-import { PremiumButton } from '../../components/premium/PremiumButton';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { Button } from '../../components/ui/Button';
 
 const CATEGORIES = ['All', 'Residential', 'Commercial', 'Shop', 'Office'];
 const { width } = Dimensions.get('window');
@@ -55,7 +55,7 @@ export default function HomeDashboard() {
   
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { colors } = useThemeColor();
+  const { colors, isDark } = useThemeColor();
 
   // 1. Fetch ALL properties
   const { 
@@ -147,7 +147,7 @@ export default function HomeDashboard() {
         >
           <Bell size={22} color={colors.text} />
           {unreadCount > 0 && (
-            <View style={[styles.notificationDot, { backgroundColor: colors.primary }]} />
+            <View style={[styles.notificationDot, { backgroundColor: colors.primary, borderColor: colors.card }]} />
           )}
         </TouchableOpacity>
       </View>
@@ -191,16 +191,15 @@ export default function HomeDashboard() {
       {/* SPOTLIGHT SECTION */}
       {!searchQuery && activeCategory === 'All' && spotlightData.length > 0 && (
         <View style={styles.spotlightSection}>
-          <SectionHeader 
-            title="Spotlight" 
-            subtitle="Exceptional spaces curated for you" 
-            style={{ paddingHorizontal: 24 }}
-          />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, marginBottom: 16 }}>
+            <Text style={{ fontSize: 20, fontFamily: 'Outfit_700Bold', color: colors.text }}>Featured Near You</Text>
+            <Text style={{ fontSize: 14, fontFamily: 'Outfit_600SemiBold', color: '#008080' }}>See All</Text>
+          </View>
           <FlashList<any>
             data={spotlightData}
             horizontal
             showsHorizontalScrollIndicator={false}
-            snapToInterval={width * 0.85 + 16}
+            snapToInterval={width * 0.7 + 16}
             decelerationRate="fast"
             keyExtractor={(item: any) => `spot-${item.id}`}
             renderItem={({ item }: { item: any }) => (
@@ -216,10 +215,11 @@ export default function HomeDashboard() {
 
       {/* MAIN FEED HEADER */}
       <View style={{ paddingHorizontal: 24, marginTop: 12 }}>
-        <SectionHeader 
-          title={searchQuery ? 'Results' : 'Discover'} 
-          subtitle={searchQuery ? `Found ${filteredProperties.length} spaces matching "${searchQuery}"` : "Find your perfect space in Ghana"}
-        />
+        <View style={{ flexDirection: 'row', paddingBottom: 8 }}>
+          <Text style={{ fontSize: 20, fontFamily: 'Outfit_700Bold', color: colors.text }}>
+            {searchQuery ? 'Results' : 'Recently Added'}
+          </Text>
+        </View>
       </View>
 
     </View>
@@ -242,14 +242,14 @@ export default function HomeDashboard() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
       <FlashList<any>
         data={loading ? ([1, 2, 3] as any[]) : filteredProperties}
         keyExtractor={(item: any, index: number) => typeof item === 'number' ? `skele-${index}` : item.id}
         renderItem={renderItem}
         contentContainerStyle={{
           ...styles.listContent,
-          paddingTop: insets.top + (Platform.OS === 'android' ? 27 : 12),
+          paddingTop: Math.max(insets.top, Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 0) + 16,
           paddingBottom: insets.bottom + 120
         }}
         ListHeaderComponent={renderHeader}
@@ -286,7 +286,7 @@ export default function HomeDashboard() {
             <Text style={[styles.filterSectionTitle, { color: colors.textSecondary }]}>PRICE RANGE</Text>
             <View style={styles.priceInputsRow}>
               <View style={[styles.priceInputWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <Text style={{ color: colors.textSecondary, fontFamily: 'Inter_600SemiBold' }}>$</Text>
+                <Text style={{ color: colors.textSecondary, fontFamily: 'Outfit_600SemiBold' }}>$</Text>
                 <TextInput
                   style={[styles.priceInput, { color: colors.text }]}
                   placeholder="Min"
@@ -298,7 +298,7 @@ export default function HomeDashboard() {
               </View>
               <Text style={{ color: colors.textSecondary }}>—</Text>
               <View style={[styles.priceInputWrapper, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <Text style={{ color: colors.textSecondary, fontFamily: 'Inter_600SemiBold' }}>$</Text>
+                <Text style={{ color: colors.textSecondary, fontFamily: 'Outfit_600SemiBold' }}>$</Text>
                 <TextInput
                   style={[styles.priceInput, { color: colors.text }]}
                   placeholder="Max"
@@ -375,7 +375,7 @@ export default function HomeDashboard() {
               <Text style={[styles.clearBtnText, { color: colors.textSecondary }]}>Reset All</Text>
             </TouchableOpacity>
             
-            <PremiumButton 
+            <Button 
                 title="Show Results" 
                 onPress={() => bottomSheetModalRef.current?.dismiss()}
                 style={{ flex: 1, marginLeft: 24 }}
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Outfit_400Regular',
     height: '100%',
   },
   filterBtn: {
@@ -443,7 +443,6 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     borderWidth: 2,
-    borderColor: '#0A0F1E',
   },
   categoriesWrapper: {
     marginBottom: 32,
@@ -459,7 +458,7 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 14,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Outfit_700Bold',
     fontWeight: '700',
     letterSpacing: 0.5,
   },
@@ -478,13 +477,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     marginTop: 24,
     fontSize: 20,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Outfit_700Bold',
     fontWeight: '700',
   },
   emptySub: {
     marginTop: 8,
     fontSize: 15,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Outfit_400Regular',
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -500,7 +499,7 @@ const styles = StyleSheet.create({
   },
   filterSectionTitle: {
     fontSize: 12,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Outfit_700Bold',
     fontWeight: '700',
     marginBottom: 16,
     letterSpacing: 1.5,
@@ -523,7 +522,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
     fontSize: 16,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Outfit_600SemiBold',
   },
   filterPillsRow: {
     flexDirection: 'row',
@@ -538,7 +537,7 @@ const styles = StyleSheet.create({
   },
   filterPillText: {
     fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Outfit_600SemiBold',
   },
   sheetFooter: {
     flexDirection: 'row',
@@ -551,7 +550,7 @@ const styles = StyleSheet.create({
   },
   clearBtnText: {
     fontSize: 16,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Outfit_600SemiBold',
     fontWeight: '600',
   },
 });

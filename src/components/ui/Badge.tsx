@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { useThemeColor } from '../../hooks/useThemeColor';
 
-interface PremiumBadgeProps {
+interface BadgeProps {
   label: string;
   variant?: 'primary' | 'success' | 'error' | 'warning' | 'surface';
   style?: ViewStyle;
@@ -12,7 +12,7 @@ interface PremiumBadgeProps {
  * A stylized badge component for displaying small tags, statuses, or categories.
  * Supports multiple semantic variants (primary, success, error, warning, surface).
  */
-export const PremiumBadge: React.FC<PremiumBadgeProps> = ({
+export const Badge: React.FC<BadgeProps> = ({
   label,
   variant = 'surface',
   style,
@@ -21,7 +21,7 @@ export const PremiumBadge: React.FC<PremiumBadgeProps> = ({
 
   const getVariantStyle = () => {
     switch (variant) {
-      case 'primary': return { backgroundColor: 'rgba(245, 158, 11, 0.15)', borderColor: colors.primary };
+      case 'primary': return { backgroundColor: 'rgba(0, 102, 255, 0.15)', borderColor: colors.primary };
       case 'success': return { backgroundColor: 'rgba(16, 185, 129, 0.15)', borderColor: colors.success };
       case 'error': return { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderColor: colors.error };
       case 'warning': return { backgroundColor: 'rgba(245, 158, 11, 0.15)', borderColor: colors.warning };
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 10,
-    fontFamily: 'Inter_700Bold',
+    fontFamily: 'Outfit_700Bold',
     fontWeight: '700',
     letterSpacing: 1,
   },

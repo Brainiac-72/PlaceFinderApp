@@ -1,33 +1,60 @@
-import { Link, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, Alert, ActivityIndicator, Dimensions, ImageBackground, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
-import { supabase } from '../../utils/supabase';
-import { useThemeColor } from '../../hooks/useThemeColor';
-import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
-import Toast from 'react-native-toast-message';
-import { GoogleAuthButton } from '../../components/GoogleAuthButton';
+import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
+import { Link, useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
+import {
+  ActivityIndicator,
+  Dimensions,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import Toast from "react-native-toast-message";
+import { GoogleAuthButton } from "../../components/GoogleAuthButton";
+import { useThemeColor } from "../../hooks/useThemeColor";
+import { supabase } from "../../utils/supabase";
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
-// Premium modern interior photo for the background
-const BG_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80';
+// Array of natively vertical (portrait) premium building/space backgrounds for mobile
+const BG_IMAGES = [
+  "https://images.unsplash.com/photo-1555636222-cae831e670b3?q=80&w=1080&h=1920&auto=format&fit=crop", // Portrait skyscraper
+  "https://images.unsplash.com/photo-1515263487990-61b07816b324?q=80&w=1080&h=1920&auto=format&fit=crop", // Portrait modern apartment
+  "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=1080&h=1920&auto=format&fit=crop", // Portrait beautiful house
+  "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=1080&h=1920&auto=format&fit=crop", // Portrait luxury home
+  "https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?q=80&w=1080&h=1920&auto=format&fit=crop", // Portrait modern interior
+];
 
-/**
- * The Login Screen.
- * Handles existing user authentication using Supabase email/password or OAuth.
- */
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [currentBg, setCurrentBg] = useState(BG_IMAGES[0]);
   const { colors, isDark } = useThemeColor();
+
+  useFocusEffect(
+    useCallback(() => {
+      const randomIndex = Math.floor(Math.random() * BG_IMAGES.length);
+      setCurrentBg(BG_IMAGES[randomIndex]);
+    }, []),
+  );
 
   async function signInWithEmail() {
     if (!email || !password) {
-      Toast.show({ type: 'error', text1: 'Required', text2: 'Please enter both email and password.' });
+      Toast.show({
+        type: "error",
+        text1: "Required",
+        text2: "Please enter both email and password.",
+      });
       return;
     }
     setLoading(true);
@@ -37,110 +64,210 @@ export default function LoginScreen() {
     });
 
     if (error) {
-      Toast.show({ type: 'error', text1: 'Authentication Failed', text2: error.message });
+      Toast.show({
+        type: "error",
+        text1: "Authentication Failed",
+        text2: error.message,
+      });
     }
     setLoading(false);
   }
 
+  // Super translucent glass settings so background shows through
+  const glassBg = isDark ? "rgba(0, 0, 0, 0.4)" : "rgba(0, 0, 0, 0.25)"; // Slightly darker card
+  const inputBg = isDark ? "rgba(0, 0, 0, 0.45)" : "rgba(0, 0, 0, 0.35)"; // Darker inputs for readability
+  const inputBorder = isDark
+    ? "rgba(255, 255, 255, 0.2)"
+    : "rgba(255, 255, 255, 0.35)";
+  const textColor = "#FFF"; // Force white text for better contrast on glass
+  const iconColor = "#FFF";
+  const placeholderColor = "rgba(255,255,255,0.7)";
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <ImageBackground source={{ uri: BG_IMAGE }} style={styles.backgroundImage} resizeMode="cover">
+      <ImageBackground
+        source={{ uri: currentBg }}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
         <LinearGradient
-          colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.8)']}
+          colors={["rgba(0,0,0,0.2)", "rgba(0,0,0,0.6)"]}
           style={styles.gradientOverlay}
         >
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={styles.keyboardView}
           >
             <View style={styles.contentWrapper}>
-              
-              {/* Premium Header */}
-              <View style={styles.headerContainer}>
+              <Animated.View
+                entering={FadeInDown.duration(800).springify()}
+                style={styles.headerContainer}
+              >
                 <View style={styles.iconWrapper}>
-                  <Ionicons name="location" size={42} color="#fff" />
+                  <Ionicons name="diamond" size={42} color="#fff" />
                 </View>
                 <Text style={styles.appName}>SpaceFinder</Text>
-                <Text style={styles.tagline}>Unlock premium properties seamlessly.</Text>
-              </View>
+                <Text style={styles.tagline}>
+                  Unlock premium properties seamlessly.
+                </Text>
+              </Animated.View>
 
-              {/* Glassmorphic Login Card */}
-              <BlurView intensity={90} tint={isDark ? 'dark' : 'light'} style={styles.glassCard}>
-                <Text style={[styles.loginTitle, { color: isDark ? '#fff' : '#1C1C1E' }]}>Welcome Back</Text>
-                
-                <View style={styles.inputContainer}>
-                  <View style={[styles.inputWrapper, { backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.7)' }]}>
-                    <Ionicons name="mail-outline" size={20} color={isDark ? '#A0A0A0' : '#666'} style={styles.inputIcon} />
-                    <TextInput
-                      style={[styles.input, { color: isDark ? '#fff' : '#000' }]}
-                      placeholder="Email Address"
-                      placeholderTextColor={isDark ? '#A0A0A0' : '#888'}
-                      value={email}
-                      autoCapitalize="none"
-                      keyboardType="email-address"
-                      onChangeText={setEmail}
-                    />
-                  </View>
-
-                  <View style={[styles.inputWrapper, { backgroundColor: isDark ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.7)' }]}>
-                    <Ionicons name="lock-closed-outline" size={20} color={isDark ? '#A0A0A0' : '#666'} style={styles.inputIcon} />
-                    <TextInput
-                      style={[styles.input, { color: isDark ? '#fff' : '#000' }]}
-                      placeholder="Password"
-                      placeholderTextColor={isDark ? '#A0A0A0' : '#888'}
-                      value={password}
-                      secureTextEntry={!showPassword}
-                      autoCapitalize="none"
-                      onChangeText={setPassword}
-                    />
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                      <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={isDark ? '#A0A0A0' : '#666'} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                <TouchableOpacity 
-                  style={[styles.loginButton, { shadowColor: colors.primary }]}
-                  onPress={signInWithEmail}
-                  disabled={loading}
-                  activeOpacity={0.8}
+              <Animated.View
+                entering={FadeInUp.duration(800).delay(200).springify()}
+                style={styles.cardContainer}
+              >
+                <BlurView
+                  intensity={30}
+                  tint="light"
+                  style={[
+                    styles.glassCard,
+                    {
+                      backgroundColor: glassBg,
+                      borderColor: "rgba(255,255,255,0.4)",
+                    },
+                  ]}
                 >
-                  <LinearGradient
-                    colors={['#007AFF', '#0056b3']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.gradientButton}
+                  <Text style={[styles.loginTitle, { color: "#fff" }]}>
+                    Welcome Back
+                  </Text>
+
+                  <View style={styles.inputContainer}>
+                    <View
+                      style={[
+                        styles.inputWrapper,
+                        { backgroundColor: inputBg, borderColor: inputBorder },
+                      ]}
+                    >
+                      <Ionicons
+                        name="mail-outline"
+                        size={20}
+                        color={iconColor}
+                        style={styles.inputIcon}
+                      />
+                      <TextInput
+                        style={[styles.input, { color: textColor }]}
+                        placeholder="Email Address"
+                        placeholderTextColor={placeholderColor}
+                        value={email}
+                        autoCapitalize="none"
+                        keyboardType="email-address"
+                        onChangeText={setEmail}
+                      />
+                    </View>
+
+                    <View
+                      style={[
+                        styles.inputWrapper,
+                        { backgroundColor: inputBg, borderColor: inputBorder },
+                      ]}
+                    >
+                      <Ionicons
+                        name="lock-closed-outline"
+                        size={20}
+                        color={iconColor}
+                        style={styles.inputIcon}
+                      />
+                      <TextInput
+                        style={[styles.input, { color: textColor }]}
+                        placeholder="Password"
+                        placeholderTextColor={placeholderColor}
+                        value={password}
+                        secureTextEntry={!showPassword}
+                        autoCapitalize="none"
+                        onChangeText={setPassword}
+                      />
+                      <TouchableOpacity
+                        onPress={() => setShowPassword(!showPassword)}
+                        style={styles.eyeIcon}
+                      >
+                        <Ionicons
+                          name={
+                            showPassword ? "eye-off-outline" : "eye-outline"
+                          }
+                          size={20}
+                          color={iconColor}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.loginButton}
+                    onPress={signInWithEmail}
+                    disabled={loading}
+                    activeOpacity={0.8}
                   >
-                    {loading ? (
-                      <ActivityIndicator color="#fff" />
-                    ) : (
-                      <>
-                        <Text style={styles.loginButtonText}>Sign In</Text>
-                        <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
-                      </>
-                    )}
-                  </LinearGradient>
-                </TouchableOpacity>
+                    <LinearGradient
+                      colors={
+                        isDark ? ["#0A84FF", "#0040DD"] : ["#007AFF", "#0056b3"]
+                      }
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.gradientButton}
+                    >
+                      {loading ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <>
+                          <Text style={styles.loginButtonText}>Sign In</Text>
+                          <Ionicons
+                            name="arrow-forward"
+                            size={20}
+                            color="#fff"
+                            style={{ marginLeft: 8 }}
+                          />
+                        </>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
 
-                <View style={styles.footerRow}>
-                  <Text style={[styles.footerText, { color: isDark ? '#A0A0A0' : '#666' }]}>New to SpaceFinder? </Text>
-                  <Link href="/(auth)/register" asChild>
-                    <TouchableOpacity hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                      <Text style={[styles.registerLink, { color: colors.primary }]}>Create an account</Text>
-                    </TouchableOpacity>
-                  </Link>
-                </View>
+                  <View style={styles.footerRow}>
+                    <Text
+                      style={[
+                        styles.footerText,
+                        { color: "rgba(255,255,255,0.8)" },
+                      ]}
+                    >
+                      New to SpaceFinder?{" "}
+                    </Text>
+                    <Link href="/(auth)/register" asChild>
+                      <TouchableOpacity
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Text style={[styles.registerLink, { color: "#fff" }]}>
+                          Create an account
+                        </Text>
+                      </TouchableOpacity>
+                    </Link>
+                  </View>
 
-                <View style={styles.dividerContainer}>
-                  <View style={[styles.dividerLine, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]} />
-                  <Text style={[styles.dividerText, { color: isDark ? '#666' : '#999' }]}>OR</Text>
-                  <View style={[styles.dividerLine, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]} />
-                </View>
+                  <View style={styles.dividerContainer}>
+                    <View
+                      style={[
+                        styles.dividerLine,
+                        { backgroundColor: "rgba(255,255,255,0.2)" },
+                      ]}
+                    />
+                    <Text
+                      style={[
+                        styles.dividerText,
+                        { color: "rgba(255,255,255,0.6)" },
+                      ]}
+                    >
+                      OR
+                    </Text>
+                    <View
+                      style={[
+                        styles.dividerLine,
+                        { backgroundColor: "rgba(255,255,255,0.2)" },
+                      ]}
+                    />
+                  </View>
 
-                <GoogleAuthButton />
-                
-              </BlurView>
+                  <GoogleAuthButton />
+                </BlurView>
+              </Animated.View>
             </View>
           </KeyboardAvoidingView>
         </LinearGradient>
@@ -159,7 +286,7 @@ const styles = StyleSheet.create({
   },
   gradientOverlay: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   keyboardView: {
     flex: 1,
@@ -167,50 +294,57 @@ const styles = StyleSheet.create({
   contentWrapper: {
     flex: 1,
     paddingHorizontal: 24,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   headerContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 40,
   },
   iconWrapper: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(255,255,255,0.15)",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: "rgba(255,255,255,0.3)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
   },
   appName: {
-    fontSize: 36,
-    fontWeight: '800',
-    fontFamily: 'Outfit_800ExtraBold',
-    color: '#fff',
+    fontSize: 38,
+    fontFamily: "PlayfairDisplay_700Bold",
+    color: "#fff",
     letterSpacing: -0.5,
     marginBottom: 8,
   },
   tagline: {
     fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
-    fontWeight: '500',
-    fontFamily: 'Outfit_500Medium',
+    color: "rgba(255,255,255,0.8)",
+    fontFamily: "Outfit_500Medium",
+  },
+  cardContainer: {
+    borderRadius: 32,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
   },
   glassCard: {
-    borderRadius: 32,
     padding: 32,
-    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
   },
   loginTitle: {
     fontSize: 26,
-    fontWeight: '800',
-    fontFamily: 'Outfit_800ExtraBold',
+    fontFamily: "Outfit_800ExtraBold",
     marginBottom: 24,
-    textAlign: 'center',
+    textAlign: "center",
     letterSpacing: -0.5,
   },
   inputContainer: {
@@ -218,23 +352,21 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderRadius: 16,
     paddingHorizontal: 16,
     height: 56,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1.5,
   },
   inputIcon: {
-    marginRight: 12,
+    marginRight: 14,
   },
   input: {
     flex: 1,
     fontSize: 16,
-    fontWeight: '500',
-    fontFamily: 'Outfit_500Medium',
-    height: '100%',
+    fontFamily: "Outfit_500Medium",
+    height: "100%",
   },
   eyeIcon: {
     padding: 8,
@@ -242,42 +374,36 @@ const styles = StyleSheet.create({
   loginButton: {
     height: 56,
     borderRadius: 16,
-    overflow: 'hidden',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 4,
+    overflow: "hidden",
   },
   gradientButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   loginButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
-    fontWeight: '700',
-    fontFamily: 'Outfit_700Bold',
+    fontFamily: "Outfit_700Bold",
   },
   footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: 24,
-    alignItems: 'center',
+    alignItems: "center",
   },
   footerText: {
     fontSize: 15,
-    fontFamily: 'Outfit_400Regular',
+    fontFamily: "Outfit_500Medium",
   },
   registerLink: {
     fontSize: 15,
-    fontWeight: '700',
-    fontFamily: 'Outfit_700Bold',
+    fontFamily: "Outfit_700Bold",
   },
   dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginVertical: 20,
   },
   dividerLine: {
@@ -287,8 +413,7 @@ const styles = StyleSheet.create({
   dividerText: {
     marginHorizontal: 16,
     fontSize: 12,
-    fontWeight: '700',
-    fontFamily: 'Outfit_700Bold',
+    fontFamily: "Outfit_700Bold",
     letterSpacing: 1,
   },
 });

@@ -10,6 +10,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
 import Toast from 'react-native-toast-message';
 import { AMENITIES } from '../../../constants/Amenities';
+import { useQueryClient } from '@tanstack/react-query';
 
 const PROPERTY_TYPES = ['Residential', 'Commercial', 'Office', 'Shop', 'Event'];
 
@@ -23,6 +24,7 @@ export default function EditPropertyScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useThemeColor();
   const { user, profile } = useAuth();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (profile && profile.role === 'seeker') {
@@ -158,6 +160,8 @@ export default function EditPropertyScreen() {
     if (error) {
       Toast.show({ type: 'error', text1: 'Update Failed', text2: error.message });
     } else {
+      queryClient.invalidateQueries({ queryKey: ['property', id] });
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
       Toast.show({ type: 'success', text1: 'Success', text2: 'Changes saved successfully!' });
       router.back();
     }

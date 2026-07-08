@@ -26,7 +26,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
       <Text 
         style={[
           styles.title, 
-          { color: colors.text, fontFamily: light ? 'Inter_600SemiBold' : 'PlayfairDisplay_700Bold' }
+          { color: colors.text, fontFamily: light ? 'Outfit_600SemiBold' : 'PlayfairDisplay_700Bold' }
         ]}
       >
         {title}
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 15,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Outfit_400Regular',
     lineHeight: 22,
   },
 });

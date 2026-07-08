@@ -7,7 +7,7 @@ import { notificationService, Notification } from '../services/notificationServi
 import { useThemeColor } from '../hooks/useThemeColor';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeOutRight } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
+
 
 /**
  * The Notifications screen.

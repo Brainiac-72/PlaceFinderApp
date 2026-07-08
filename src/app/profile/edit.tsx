@@ -7,12 +7,12 @@ import { useThemeColor } from '../../hooks/useThemeColor';
 import Toast from 'react-native-toast-message';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { BlurView } from 'expo-blur';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PremiumInput } from '../../components/premium/PremiumInput';
-import { PremiumButton } from '../../components/premium/PremiumButton';
-import { SectionHeader } from '../../components/premium/SectionHeader';
-import { PremiumAvatar } from '../../components/premium/PremiumAvatar';
+import { Input } from '../../components/ui/Input';
+import { Button } from '../../components/ui/Button';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { Avatar } from '../../components/ui/Avatar';
 import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
 
@@ -184,33 +184,33 @@ export default function EditProfileScreen() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: '#0A0F1E', paddingTop: insets.top + (Platform.OS === 'android' ? 15 : 0) }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + (Platform.OS === 'android' ? 15 : 0) }]}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.navigate('/profile')} style={styles.backBtn}>
-              <ChevronLeft size={24} color="#FFF" />
+            <TouchableOpacity onPress={() => router.navigate('/profile')} style={[styles.backBtn, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <ChevronLeft size={24} color={colors.text} />
             </TouchableOpacity>
             <SectionHeader title="Settings" subtitle="Manage your account & security" />
           </View>
 
           <View style={styles.avatarContainer}>
-             <PremiumAvatar size={100} online={true} uri={avatarUrl} name={fullName} />
+             <Avatar size={100} online={true} uri={avatarUrl} name={fullName} />
              <TouchableOpacity style={styles.changePhotoBtn} onPress={pickImage}>
                 <Text style={styles.changePhotoText}>Change Photo</Text>
              </TouchableOpacity>
           </View>
 
           <Text style={styles.sectionTitle}>PERSONAL DETAILS</Text>
-          <PremiumInput 
+          <Input 
             label="Full Name" 
             value={fullName} 
             onChangeText={setFullName} 
             placeholder="John Doe" 
             icon={<User size={20} color={colors.primary} />}
           />
-          <PremiumInput 
+          <Input 
             label="Phone Number" 
             value={phoneNumber} 
             onChangeText={setPhoneNumber} 
@@ -219,10 +219,10 @@ export default function EditProfileScreen() {
             icon={<Phone size={20} color={colors.primary} />}
           />
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
           <Text style={styles.sectionTitle}>SECURITY</Text>
-          <PremiumInput 
+          <Input 
             label="Current Password" 
             value={oldPassword} 
             onChangeText={setOldPassword} 
@@ -235,7 +235,7 @@ export default function EditProfileScreen() {
               </TouchableOpacity>
             }
           />
-          <PremiumInput 
+          <Input 
             label="New Password" 
             value={newPassword} 
             onChangeText={setNewPassword} 
@@ -250,7 +250,7 @@ export default function EditProfileScreen() {
           />
 
           {newPassword.length > 0 && (
-            <View style={styles.criteriaContainer}>
+            <View style={[styles.criteriaContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {renderCriterion(hasMinLength, "At least 8 characters")}
               {renderCriterion(hasUppercase, "One uppercase letter")}
               {renderCriterion(hasLowercase, "One lowercase letter")}
@@ -259,7 +259,7 @@ export default function EditProfileScreen() {
             </View>
           )}
 
-          <PremiumInput 
+          <Input 
             label="Confirm New Password" 
             value={confirmPassword} 
             onChangeText={setConfirmPassword} 
@@ -273,7 +273,7 @@ export default function EditProfileScreen() {
             }
           />
 
-          <PremiumButton 
+          <Button 
             title="Update Password" 
             variant="secondary" 
             loading={passwordLoading} 
@@ -284,9 +284,9 @@ export default function EditProfileScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <BlurView intensity={100} tint="dark" style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 24) }]}>
-        <PremiumButton title="Save Profile Changes" loading={loading} onPress={handleUpdateProfile} />
-      </BlurView>
+      <View style={[styles.bottomBar, { backgroundColor: colors.background === '#000000' || colors.background === '#0A0F1E' ? 'rgba(10,15,30,0.95)' : 'rgba(255,255,255,0.95)', paddingBottom: Math.max(insets.bottom, 24), borderTopColor: colors.border }]}>
+        <Button title="Save Profile Changes" loading={loading} onPress={handleUpdateProfile} />
+      </View>
     </View>
   );
 }
@@ -295,14 +295,14 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { paddingHorizontal: 24, paddingBottom: 160 },
   header: { marginBottom: 32 },
-  backBtn: { width: 44, height: 44, borderRadius: 12, backgroundColor: '#111827', justifyContent: 'center', alignItems: 'center', marginBottom: 24, borderWidth: 1, borderColor: '#1F2937' },
+  backBtn: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 24, borderWidth: 1 },
   avatarContainer: { alignItems: 'center', marginBottom: 32 },
   changePhotoBtn: { marginTop: 12, paddingVertical: 8, paddingHorizontal: 16, backgroundColor: 'rgba(245,158,11,0.1)', borderRadius: 20, borderWidth: 1, borderColor: 'rgba(245,158,11,0.3)' },
-  changePhotoText: { color: '#F59E0B', fontSize: 13, fontFamily: 'Inter_600SemiBold' },
-  sectionTitle: { fontSize: 12, fontFamily: 'Inter_700Bold', color: '#6B7280', letterSpacing: 1.5, marginBottom: 20 },
-  divider: { height: 1, backgroundColor: '#1F2937', marginVertical: 32 },
-  criteriaContainer: { marginBottom: 24, backgroundColor: '#111827', padding: 20, borderRadius: 16, borderWidth: 1, borderColor: '#1F2937' },
+  changePhotoText: { color: '#0066FF', fontSize: 13, fontFamily: 'Outfit_600SemiBold' },
+  sectionTitle: { fontSize: 12, fontFamily: 'Outfit_700Bold', color: '#6B7280', letterSpacing: 1.5, marginBottom: 20 },
+  divider: { height: 1, marginVertical: 32 },
+  criteriaContainer: { marginBottom: 24, padding: 20, borderRadius: 16, borderWidth: 1 },
   criterionRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 12 },
-  criterionText: { fontSize: 14, fontFamily: 'Inter_400Regular' },
+  criterionText: { fontSize: 14, fontFamily: 'Outfit_400Regular' },
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 24, paddingTop: 20, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' },
 });

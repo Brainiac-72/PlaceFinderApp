@@ -3,7 +3,7 @@ import { View, StyleSheet, ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
 import { useThemeColor } from '../../hooks/useThemeColor';
 
-interface PremiumAvatarProps {
+interface AvatarProps {
   uri?: string;
   name?: string;
   size?: number;
@@ -15,7 +15,7 @@ interface PremiumAvatarProps {
  * A high-quality user avatar component with an optional online status indicator.
  * Automatically falls back to an initial-based image if no URI is provided.
  */
-export const PremiumAvatar: React.FC<PremiumAvatarProps> = ({
+export const Avatar: React.FC<AvatarProps> = ({
   uri,
   name,
   size = 48,

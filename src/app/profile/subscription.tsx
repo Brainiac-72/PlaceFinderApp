@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useThemeColor } from '../../hooks/useThemeColor';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { PremiumButton } from '../../components/premium/PremiumButton';
+import { Button } from '../../components/ui/Button';
 import { useCustomAlert } from '../../providers/AlertProvider';
 
 /**
@@ -16,6 +16,7 @@ export default function SubscriptionScreen() {
   const router = useRouter();
   const { colors } = useThemeColor();
   const { showAlert } = useCustomAlert();
+  const insets = useSafeAreaInsets();
 
   const handleUpgrade = () => {
     showAlert("Upgrade Plan", "This feature is currently in development. You will be notified when premium upgrades are available.");
@@ -77,7 +78,7 @@ export default function SubscriptionScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(400).duration(600)} style={{ marginTop: 24 }}>
-            <PremiumButton title="Upgrade Plan" onPress={handleUpgrade} style={{ width: '100%' }} />
+            <Button title="Upgrade Plan" onPress={handleUpgrade} style={{ width: '100%' }} />
             <TouchableOpacity style={styles.cancelBtn} onPress={() => showAlert("Cancel Subscription", "Are you sure you want to cancel your subscription?", [{ text: "No", style: "cancel" }, { text: "Yes", style: "destructive" }])}>
                 <Text style={styles.cancelBtnText}>Cancel Subscription</Text>
             </TouchableOpacity>
@@ -96,7 +97,7 @@ const styles = StyleSheet.create({
   container: { padding: 20, paddingBottom: 40 },
   mainTitle: { fontSize: 32, fontWeight: '800', letterSpacing: -1, marginBottom: 6 },
   subtitle: { fontSize: 14, fontWeight: '600', marginBottom: 24 },
-  heroCard: { borderRadius: 28, padding: 24, marginBottom: 32, shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 8 },
+  heroCard: { borderRadius: 28, padding: 24, marginBottom: 32, shadowColor: '#0066FF', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 8 },
   heroContent: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   heroIconBox: { width: 60, height: 60, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
   heroTextBox: { flex: 1 },

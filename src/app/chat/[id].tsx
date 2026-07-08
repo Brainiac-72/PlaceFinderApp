@@ -4,7 +4,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { BlurView } from "expo-blur";
+
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -36,7 +36,7 @@ import {
   View
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { PremiumAvatar } from "../../components/premium/PremiumAvatar";
+import { Avatar } from "../../components/ui/Avatar";
 import { useThemeColor } from "../../hooks/useThemeColor";
 import { useAuth } from "../../providers/AuthProvider";
 import {
@@ -182,7 +182,7 @@ export default function ChatScreen() {
           },
         ]}
       >
-        <ActivityIndicator size="large" color="#F59E0B" />
+        <ActivityIndicator size="large" color="#0066FF" />
       </View>
     );
   }
@@ -199,10 +199,8 @@ export default function ChatScreen() {
         keyboardVerticalOffset={0}
       >
         {/* Premium Header */}
-        <BlurView
-          intensity={100}
-          tint={isDark ? "dark" : "light"}
-          style={[styles.header, { paddingTop: insets.top + 10, borderBottomColor: colors.border }]}
+        <View
+          style={[styles.header, { backgroundColor: isDark ? 'rgba(10,15,30,0.95)' : 'rgba(255,255,255,0.95)', paddingTop: insets.top + 10, borderBottomColor: colors.border }]}
         >
           <TouchableOpacity
             onPress={() => router.back()}
@@ -212,7 +210,7 @@ export default function ChatScreen() {
           </TouchableOpacity>
 
           <View style={styles.headerMain}>
-            <PremiumAvatar size={40} online={true} />
+            <Avatar size={40} online={true} />
             <View style={styles.headerInfo}>
               <Text style={[styles.headerName, { color: colors.text }]}>
                 {otherProfile?.full_name || "Premium Client"}
@@ -224,7 +222,7 @@ export default function ChatScreen() {
           <TouchableOpacity style={styles.headerBtn}>
             <Info size={20} color={colors.textMuted} />
           </TouchableOpacity>
-        </BlurView>
+        </View>
 
         {/* Property Context */}
         {session?.property && (
@@ -293,7 +291,7 @@ export default function ChatScreen() {
                         <Text
                           style={[
                             styles.attachmentTitle,
-                            { color: isMe ? "#0A0F1E" : colors.text },
+                            { color: isMe ? "#FFFFFF" : colors.text },
                           ]}
                           numberOfLines={1}
                         >
@@ -302,7 +300,7 @@ export default function ChatScreen() {
                         <Text
                           style={[
                             styles.attachmentPrice,
-                            { color: isMe ? "#0A0F1E" : "#F59E0B" },
+                            { color: isMe ? "#FFFFFF" : "#0066FF" },
                           ]}
                         >
                           GHS{" "}
@@ -317,7 +315,7 @@ export default function ChatScreen() {
                     <Text
                       style={[
                         styles.msgText,
-                        { color: isMe ? "#0A0F1E" : colors.text },
+                        { color: isMe ? "#FFFFFF" : colors.text },
                         hasAttachment && { padding: 12 },
                       ]}
                     >
@@ -334,12 +332,10 @@ export default function ChatScreen() {
         />
 
         {/* Premium Input */}
-        <BlurView
-          intensity={100}
-          tint={isDark ? "dark" : "light"}
+        <View
           style={[
             styles.inputBar,
-            { paddingBottom: Math.max(insets.bottom, 20), borderTopColor: colors.border },
+            { backgroundColor: isDark ? 'rgba(10,15,30,0.95)' : 'rgba(255,255,255,0.95)', paddingBottom: Math.max(insets.bottom, 20), borderTopColor: colors.border },
           ]}
         >
           <TouchableOpacity
@@ -364,14 +360,14 @@ export default function ChatScreen() {
               style={styles.sendBtn}
               onPress={() => handleSend()}
             >
-              <Send size={18} color="#0A0F1E" fill="#0A0F1E" />
+              <Send size={18} color="#FFFFFF" fill="#FFFFFF" />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={styles.cameraBtn}>
               <Camera size={22} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
-        </BlurView>
+        </View>
       </KeyboardAvoidingView>
 
       {/* Attachment Picker */}
@@ -405,7 +401,7 @@ export default function ChatScreen() {
                     GHS {Number(item.price).toLocaleString()}
                   </Text>
                 </View>
-                <Send size={16} color="#F59E0B" />
+                <Send size={16} color="#0066FF" />
               </TouchableOpacity>
             )}
           />
@@ -438,10 +434,10 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   headerInfo: { flex: 1 },
-  headerName: { fontSize: 16, fontFamily: "Inter_700Bold" },
+  headerName: { fontSize: 16, fontFamily: "Outfit_700Bold" },
   headerStatus: {
     fontSize: 11,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Outfit_400Regular",
     color: "#10B981",
     marginTop: 2,
   },
@@ -457,12 +453,12 @@ const styles = StyleSheet.create({
   contextInfo: { flex: 1, marginLeft: 12 },
   contextLabel: {
     fontSize: 9,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Outfit_700Bold",
     letterSpacing: 0.5,
   },
   contextTitle: {
     fontSize: 13,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Outfit_600SemiBold",
   },
   messageList: { padding: 20, gap: 16 },
   messageRow: { flexDirection: "row", width: "100%" },
@@ -474,12 +470,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 20,
   },
-  bubbleMe: { backgroundColor: "#F59E0B", borderBottomRightRadius: 4 },
+  bubbleMe: { backgroundColor: "#0066FF", borderBottomRightRadius: 4 },
   bubbleThem: {
     borderBottomLeftRadius: 4,
     borderWidth: 1,
   },
-  msgText: { fontSize: 15, fontFamily: "Inter_400Regular", lineHeight: 22 },
+  msgText: { fontSize: 15, fontFamily: "Outfit_400Regular", lineHeight: 22 },
   attachmentCard: {
     borderRadius: 16,
     overflow: "hidden",
@@ -488,10 +484,10 @@ const styles = StyleSheet.create({
   attachmentInfo: { padding: 12 },
   attachmentTitle: {
     fontSize: 14,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "Outfit_700Bold",
     marginBottom: 4,
   },
-  attachmentPrice: { fontSize: 13, fontFamily: "Inter_700Bold" },
+  attachmentPrice: { fontSize: 13, fontFamily: "Outfit_700Bold" },
   inputBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -511,7 +507,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     fontSize: 15,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Outfit_400Regular",
     maxHeight: 100,
     marginHorizontal: 8,
   },
@@ -519,7 +515,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#F59E0B",
+    backgroundColor: "#0066FF",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -545,12 +541,12 @@ const styles = StyleSheet.create({
   sheetItemImg: { width: 50, height: 50, borderRadius: 8 },
   sheetItemTitle: {
     fontSize: 14,
-    fontFamily: "Inter_600SemiBold",
+    fontFamily: "Outfit_600SemiBold",
   },
   sheetItemPrice: {
     fontSize: 13,
-    fontFamily: "Inter_700Bold",
-    color: "#F59E0B",
+    fontFamily: "Outfit_700Bold",
+    color: "#0066FF",
     marginTop: 4,
   },
 });

@@ -3,7 +3,7 @@ import { TouchableOpacity, Text, View, StyleSheet, ActivityIndicator, ViewStyle,
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useThemeColor } from '../../hooks/useThemeColor';
 
-interface PremiumButtonProps {
+interface ButtonProps {
   title: string;
   onPress: () => void;
   variant?: 'primary' | 'secondary' | 'ghost' | 'outline';
@@ -20,7 +20,7 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
  * An elevated, animated button component that reacts to touches with a spring scale effect.
  * Supports various styling variants (primary, secondary, outline, ghost) and loading states.
  */
-export const PremiumButton: React.FC<PremiumButtonProps> = ({
+export const Button: React.FC<ButtonProps> = ({
   title,
   onPress,
   variant = 'primary',
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 16,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Outfit_600SemiBold',
     fontWeight: '600',
   },
 });

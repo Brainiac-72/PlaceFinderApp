@@ -3,7 +3,7 @@ import { View, Text, TextInput, StyleSheet, ViewStyle, TextInputProps } from 're
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useThemeColor } from '../../hooks/useThemeColor';
 
-interface PremiumInputProps extends TextInputProps {
+interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
   icon?: React.ReactNode;
@@ -15,7 +15,7 @@ interface PremiumInputProps extends TextInputProps {
  * A stylized text input field with animated focus states.
  * Supports icons (left/right), error messages, and top labels.
  */
-export const PremiumInput: React.FC<PremiumInputProps> = ({
+export const Input: React.FC<InputProps> = ({
   label,
   error,
   icon,
@@ -30,7 +30,7 @@ export const PremiumInput: React.FC<PremiumInputProps> = ({
 
   const focusedStyle = useAnimatedStyle(() => ({
     borderColor: withTiming(isFocused ? colors.primary : colors.border),
-    backgroundColor: withTiming(isFocused ? 'rgba(245, 158, 11, 0.05)' : colors.surface),
+    backgroundColor: withTiming(isFocused ? 'rgba(0, 102, 255, 0.05)' : colors.surface),
   }));
 
   return (
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
+    fontFamily: 'Outfit_600SemiBold',
     fontWeight: '600',
     marginBottom: 8,
     letterSpacing: 1.2,
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Outfit_400Regular',
   },
   rightIconContainer: {
     marginLeft: 12,
@@ -92,6 +92,6 @@ const styles = StyleSheet.create({
   error: {
     fontSize: 12,
     marginTop: 4,
-    fontFamily: 'Inter_400Regular',
+    fontFamily: 'Outfit_400Regular',
   },
 });

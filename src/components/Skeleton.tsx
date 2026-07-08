@@ -41,8 +41,8 @@ export const Skeleton = ({ width, height, borderRadius = 8, style }: SkeletonPro
       shimmerValue.value,
       [0, 1],
       [
-        'rgba(245, 158, 11, 0.05)', // Shimmer with Gold hint
-        'rgba(245, 158, 11, 0.15)'
+        'rgba(0, 102, 255, 0.05)', // Shimmer with Blue hint
+        'rgba(0, 102, 255, 0.15)'
       ]
     );
 
@@ -68,17 +68,20 @@ export const PropertyCardSkeleton = ({ gridMode }: { gridMode?: boolean }) => {
   const { colors } = useThemeColor();
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }, gridMode && styles.cardGrid]}>
-      <Skeleton width="100%" height={220} borderRadius={16} style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }} />
+      <Skeleton width={110} height="100%" borderRadius={16} />
       <View style={styles.content}>
         <View style={styles.headerRow}>
-           <Skeleton width="70%" height={24} borderRadius={4} />
+           <Skeleton width="80%" height={20} borderRadius={4} />
         </View>
-        <Skeleton width="40%" height={16} borderRadius={4} style={{ marginBottom: 12 }} />
-        <View style={styles.divider} />
+        <Skeleton width="50%" height={14} borderRadius={4} style={{ marginBottom: 12 }} />
         <View style={styles.row}>
-          <Skeleton width="25%" height={16} borderRadius={4} />
-          <Skeleton width="25%" height={16} borderRadius={4} />
-          <Skeleton width="25%" height={16} borderRadius={4} />
+          <Skeleton width="20%" height={14} borderRadius={4} />
+          <Skeleton width="20%" height={14} borderRadius={4} />
+          <Skeleton width="20%" height={14} borderRadius={4} />
+        </View>
+        <View style={[styles.row, { marginTop: 'auto', justifyContent: 'space-between' }]}>
+          <Skeleton width="40%" height={24} borderRadius={6} />
+          <Skeleton width="25%" height={24} borderRadius={12} />
         </View>
       </View>
     </View>
@@ -87,31 +90,33 @@ export const PropertyCardSkeleton = ({ gridMode }: { gridMode?: boolean }) => {
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 24,
-    borderRadius: 16,
+    flexDirection: 'row',
+    height: 140,
+    marginBottom: 16,
+    padding: 12,
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
+    alignItems: 'center',
   },
   cardGrid: {
     marginBottom: 0,
   },
   content: {
-    padding: 16,
+    flex: 1,
+    marginLeft: 16,
+    height: '100%',
+    paddingVertical: 2,
   },
   headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 8,
   },
   divider: {
-    height: 1,
-    backgroundColor: '#1F2937',
-    marginBottom: 16,
+    display: 'none',
   }
 });

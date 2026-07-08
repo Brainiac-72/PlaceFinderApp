@@ -12,9 +12,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useSavedStore } from '../../store/useSavedStore';
 import { chatService } from '../../services/chatService';
-import { SectionHeader } from '../../components/premium/SectionHeader';
-import { PremiumAvatar } from '../../components/premium/PremiumAvatar';
-import { PremiumCard } from '../../components/premium/PremiumCard';
+import { SectionHeader } from '../../components/ui/SectionHeader';
+import { Avatar } from '../../components/ui/Avatar';
+import { Card } from '../../components/ui/Card';
 
 /**
  * The user's Profile & Settings dashboard.
@@ -109,11 +109,11 @@ export default function ProfileScreen() {
             <SectionHeader title="Account" subtitle="Luxury discovery preferences" />
             
             <View style={styles.profileHero}>
-                <PremiumAvatar size={100} online={true} uri={authProfile?.avatar_url} name={authProfile?.full_name} />
+                <Avatar size={100} online={true} uri={authProfile?.avatar_url} name={authProfile?.full_name} />
                 <View style={styles.profileDetails}>
                     <Text style={[styles.userName, { color: colors.text }]}>{authProfile?.full_name || 'Premium Member'}</Text>
                     <View style={styles.badgeRow}>
-                        <View style={[styles.premiumBadge, { backgroundColor: colors.primary }]}>
+                        <View style={[styles.Badge, { backgroundColor: colors.primary }]}>
                             <Star size={12} color={colors.badgeText} fill={colors.badgeText} />
                             <Text style={[styles.premiumText, { color: colors.badgeText }]}>
                               {authProfile?.role === 'landlord' ? 'VERIFIED LANDLORD' : 'GOLD MEMBER'}
@@ -127,28 +127,28 @@ export default function ProfileScreen() {
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
-            <PremiumCard elevated style={styles.statCard}>
+            <Card elevated style={styles.statCard}>
                 <Text style={[styles.statVal, { color: colors.text }]}>
                   {authProfile?.role === 'landlord' ? listingsCount : savedIds.length}
                 </Text>
                 <Text style={[styles.statLab, { color: colors.textMuted }]}>
                   {authProfile?.role === 'landlord' ? 'LISTINGS' : 'SAVED'}
                 </Text>
-            </PremiumCard>
-            <PremiumCard elevated style={styles.statCard}>
+            </Card>
+            <Card elevated style={styles.statCard}>
                 <Text style={[styles.statVal, { color: colors.text }]}>{chatsCount}</Text>
                 <Text style={[styles.statLab, { color: colors.textMuted }]}>CHATS</Text>
-            </PremiumCard>
-            <PremiumCard elevated style={styles.statCard}>
+            </Card>
+            <Card elevated style={styles.statCard}>
                 <Text style={[styles.statVal, { color: colors.text }]}>0</Text>
                 <Text style={[styles.statLab, { color: colors.textMuted }]}>OFFERS</Text>
-            </PremiumCard>
+            </Card>
         </View>
 
         {/* Menu Sections */}
         <View style={styles.menuSection}>
             <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>PREFERENCES</Text>
-            <PremiumCard style={styles.menuContainer}>
+            <Card style={styles.menuContainer}>
                 <MenuButton 
                     icon={User} 
                     title="Edit Profile" 
@@ -167,12 +167,12 @@ export default function ProfileScreen() {
                     subtitle="Manage your premium membership" 
                     onPress={() => router.push('/profile/subscription')}
                 />
-            </PremiumCard>
+            </Card>
         </View>
 
         <View style={styles.menuSection}>
             <Text style={[styles.sectionLabel, { color: colors.textSecondary }]}>SUPPORT</Text>
-            <PremiumCard style={styles.menuContainer}>
+            <Card style={styles.menuContainer}>
                 <MenuButton 
                     icon={HelpCircle} 
                     title="Help Center" 
@@ -208,7 +208,7 @@ export default function ProfileScreen() {
                     destructive 
                     onPress={handleLogout}
                 />
-            </PremiumCard>
+            </Card>
         </View>
 
         <Text style={[styles.versionText, { color: colors.textMuted }]}>SPACEFINDER GHANA V1.4.2</Text>
@@ -225,20 +225,20 @@ const styles = StyleSheet.create({
   profileDetails: { flex: 1 },
   userName: { fontSize: 24, fontFamily: 'PlayfairDisplay_700Bold', marginBottom: 8 },
   badgeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  premiumBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, gap: 6 },
-  premiumText: { fontSize: 9, fontFamily: 'Inter_700Bold', letterSpacing: 0.5 },
-  locationText: { fontSize: 13, fontFamily: 'Inter_400Regular' },
+  Badge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, gap: 6 },
+  premiumText: { fontSize: 9, fontFamily: 'Outfit_700Bold', letterSpacing: 0.5 },
+  locationText: { fontSize: 13, fontFamily: 'Outfit_400Regular' },
   statsRow: { flexDirection: 'row', paddingHorizontal: 24, marginTop: 40, gap: 12 },
   statCard: { flex: 1, paddingVertical: 20, alignItems: 'center', justifyContent: 'center' },
-  statVal: { fontSize: 20, fontFamily: 'Inter_700Bold' },
-  statLab: { fontSize: 10, fontFamily: 'Inter_600SemiBold', marginTop: 4, letterSpacing: 1 },
+  statVal: { fontSize: 20, fontFamily: 'Outfit_700Bold' },
+  statLab: { fontSize: 10, fontFamily: 'Outfit_600SemiBold', marginTop: 4, letterSpacing: 1 },
   menuSection: { marginTop: 40, paddingHorizontal: 24 },
-  sectionLabel: { fontSize: 12, fontFamily: 'Inter_700Bold', letterSpacing: 1.5, marginBottom: 16, marginLeft: 4 },
+  sectionLabel: { fontSize: 12, fontFamily: 'Outfit_700Bold', letterSpacing: 1.5, marginBottom: 16, marginLeft: 4 },
   menuContainer: { overflow: 'hidden' },
   menuItem: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1 },
   menuIcon: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   menuText: { flex: 1, marginLeft: 16 },
-  menuTitle: { fontSize: 16, fontFamily: 'Inter_600SemiBold' },
-  menuSubtitle: { fontSize: 13, fontFamily: 'Inter_400Regular', marginTop: 2 },
-  versionText: { textAlign: 'center', marginTop: 60, fontSize: 12, fontFamily: 'Inter_700Bold', letterSpacing: 2 },
+  menuTitle: { fontSize: 16, fontFamily: 'Outfit_600SemiBold' },
+  menuSubtitle: { fontSize: 13, fontFamily: 'Outfit_400Regular', marginTop: 2 },
+  versionText: { textAlign: 'center', marginTop: 60, fontSize: 12, fontFamily: 'Outfit_700Bold', letterSpacing: 2 },
 });

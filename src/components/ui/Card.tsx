@@ -3,7 +3,7 @@ import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useThemeColor } from '../../hooks/useThemeColor';
 
-interface PremiumCardProps {
+interface CardProps {
   children: React.ReactNode;
   onPress?: () => void;
   style?: ViewStyle;
@@ -16,7 +16,7 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
  * A reusable card container with an optional interactive press effect.
  * When tapped, the card briefly presses inwards with a spring animation.
  */
-export const PremiumCard: React.FC<PremiumCardProps> = ({
+export const Card: React.FC<CardProps> = ({
   children,
   onPress,
   style,
