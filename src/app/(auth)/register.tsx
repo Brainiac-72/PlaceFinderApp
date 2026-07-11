@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import { Link, useFocusEffect } from "expo-router";
+import { Link, useFocusEffect, useRouter } from "expo-router";
 import React, { useEffect, useState, useCallback } from "react";
 import {
   ActivityIndicator,
@@ -59,6 +59,7 @@ export default function RegisterScreen() {
 
   const { colors, isDark } = useThemeColor();
   const { refreshProfile } = useAuth();
+  const router = useRouter();
 
   useFocusEffect(
     useCallback(() => {
@@ -180,12 +181,26 @@ export default function RegisterScreen() {
           .eq("id", user.id);
         await refreshProfile();
       }
-      if (!session) {
-        Toast.show({
-          type: "success",
-          text1: "Success",
-          text2: "Please check your inbox for email verification!",
+      
+      const { data: { session: newSession } } = await supabase.auth.getSession();
+      
+      if (newSession || session) {
+        router.replace("/(tabs)");
+      } else {
+        const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password
         });
+        
+        if (loginData?.session) {
+          router.replace("/(tabs)");
+        } else {
+          Toast.show({
+            type: "success",
+            text1: "Account Created",
+            text2: "Please check your email if confirmation is required.",
+          });
+        }
       }
     }
     setLoading(false);
@@ -340,7 +355,7 @@ export default function RegisterScreen() {
                         placeholderTextColor={placeholderColor}
                         value={fullName}
                         autoCapitalize="words"
-                        onChangeText={setFullName}
+                        onChangeText={(t) => setFullName(t.replace(/[^a-zA-Z\s'-]/g, ''))}
                       />
                     </View>
 
@@ -362,7 +377,7 @@ export default function RegisterScreen() {
                         placeholderTextColor={placeholderColor}
                         value={phoneNumber}
                         keyboardType="phone-pad"
-                        onChangeText={setPhoneNumber}
+                        onChangeText={(t) => setPhoneNumber(t.replace(/[^0-9+]/g, ''))}
                       />
                     </View>
 

@@ -51,6 +51,7 @@ create table public.properties (
   bathrooms numeric,
   area_size numeric,
   image_url text,
+  price_period text default 'month',
   status text check (status in ('available', 'rented')) default 'available'
 );
 
@@ -84,6 +85,7 @@ create trigger on_auth_user_created
 ALTER TABLE public.properties ADD COLUMN IF NOT EXISTS bedrooms numeric;
 ALTER TABLE public.properties ADD COLUMN IF NOT EXISTS bathrooms numeric;
 ALTER TABLE public.properties ADD COLUMN IF NOT EXISTS area_size numeric;
+ALTER TABLE public.properties ADD COLUMN IF NOT EXISTS price_period text default 'month';
 
 -- Safely create the Storage bucket (skips if it already exists)
 INSERT INTO storage.buckets (id, name, public) VALUES ('properties', 'properties', true)

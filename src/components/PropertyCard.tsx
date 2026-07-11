@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { MapPin, Bed, Bath, Star, Heart } from 'lucide-react-native';
-import { Property } from '../utils/propertyUtils';
+import { Property, formatPricePeriod } from '../utils/propertyUtils';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
@@ -108,7 +108,7 @@ const PropertyCard = ({ property, onPress, compact, gridMode }: Props) => {
         <View style={styles.footerRow}>
           <Text style={[styles.priceText, { color: colors.text }]}>
             {property.currency}{property.price.toLocaleString()}
-            <Text style={styles.priceSub}> / mo</Text>
+            <Text style={styles.priceSub}>{formatPricePeriod(property.pricePeriod)}</Text>
           </Text>
           
           <Badge 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, Platform, SafeAreaView, KeyboardAvoidingView, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, Platform, SafeAreaView, KeyboardAvoidingView, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +14,11 @@ import { AMENITIES } from '../../../constants/Amenities';
 import { useQueryClient } from '@tanstack/react-query';
 
 const PROPERTY_TYPES = ['Residential', 'Commercial', 'Office', 'Shop', 'Event'];
+const PRICE_PERIODS = [
+  { id: 'month', label: '/ Month' },
+  { id: 'year', label: '/ Year' },
+  { id: 'full', label: 'Full Price' }
+];
 
 /**
  * The Property Edit Screen.
@@ -39,6 +45,7 @@ export default function EditPropertyScreen() {
   const [title, setTitle] = useState('');
   const [type, setType] = useState('Residential');
   const [price, setPrice] = useState('');
+  const [pricePeriod, setPricePeriod] = useState('month');
   const [location, setLocation] = useState('');
   const [bedrooms, setBedrooms] = useState('');
   const [bathrooms, setBathrooms] = useState('');
@@ -69,6 +76,7 @@ export default function EditPropertyScreen() {
         setTitle(data.title);
         setType(data.type);
         setPrice(data.price.toString());
+        setPricePeriod(data.price_period || 'month');
         setLocation(data.location);
         setBedrooms(data.bedrooms?.toString() || '');
         setBathrooms(data.bathrooms?.toString() || '');
@@ -141,6 +149,7 @@ export default function EditPropertyScreen() {
       title: title.trim(),
       type,
       price: parseFloat(price),
+      price_period: pricePeriod,
       location: location.trim(),
       bedrooms: bedrooms ? parseInt(bedrooms) : null,
       bathrooms: bathrooms ? parseInt(bathrooms) : null,
@@ -205,7 +214,7 @@ export default function EditPropertyScreen() {
             onPress={pickImage}
           >
             {imageUri ? (
-              <Image source={{ uri: imageUri }} style={styles.previewImage} resizeMode="cover" />
+              <Image source={{ uri: imageBase64 ? `data:image/jpeg;base64,${imageBase64}` : imageUri }} style={styles.previewImage} contentFit="cover" />
             ) : (
               <>
                 <Ionicons name="images-outline" size={32} color={colors.primary} />
@@ -258,7 +267,40 @@ export default function EditPropertyScreen() {
                   placeholderTextColor={colors.textSecondary}
                   keyboardType="numeric"
                   value={price}
-                  onChangeText={setPrice}
+                  onChangeText={(t) => setPrice(t.replace(/[^0-9.]/g, ''))}
+                />
+              </View>
+              <View style={[styles.inputGroup, { flex: 1 }]}>
+                <Text style={[styles.label, { color: colors.text }]}>Billing Period</Text>
+                <View style={[styles.input, { padding: 4, flexDirection: 'row', backgroundColor: colors.background, borderColor: colors.border }]}>
+                  {PRICE_PERIODS.map(p => (
+                    <TouchableOpacity
+                      key={p.id}
+                      style={[
+                        { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 12 },
+                        pricePeriod === p.id && { backgroundColor: colors.primary }
+                      ]}
+                      onPress={() => setPricePeriod(p.id)}
+                    >
+                      <Text style={[
+                        { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
+                        pricePeriod === p.id && { color: '#FFF' }
+                      ]}>{p.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+            
+            <View style={styles.inputRow}>
+              <View style={[styles.inputGroup, { flex: 1 }]}>
+                <Text style={[styles.label, { color: colors.text }]}>Location <Text style={{ color: colors.error }}>*</Text></Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                  placeholder="e.g. East Legon, Accra"
+                  placeholderTextColor={colors.textSecondary}
+                  value={location}
+                  onChangeText={setLocation}
                 />
               </View>
               <View style={[styles.inputGroup, { flex: 1 }]}>
@@ -269,21 +311,12 @@ export default function EditPropertyScreen() {
                   placeholderTextColor={colors.textSecondary}
                   keyboardType="numeric"
                   value={areaSize}
-                  onChangeText={setAreaSize}
+                  onChangeText={(t) => setAreaSize(t.replace(/[^0-9.]/g, ''))}
                 />
               </View>
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Location <Text style={{ color: colors.error }}>*</Text></Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
-                placeholder="e.g. East Legon, Accra"
-                placeholderTextColor={colors.textSecondary}
-                value={location}
-                onChangeText={setLocation}
-              />
-            </View>
+
 
             <View style={styles.inputRow}>
               <View style={[styles.inputGroup, { flex: 1 }]}>
@@ -294,7 +327,7 @@ export default function EditPropertyScreen() {
                   placeholderTextColor={colors.textSecondary}
                   keyboardType="numeric"
                   value={bedrooms}
-                  onChangeText={setBedrooms}
+                  onChangeText={(t) => setBedrooms(t.replace(/[^0-9]/g, ''))}
                 />
               </View>
               <View style={[styles.inputGroup, { flex: 1 }]}>
@@ -305,7 +338,7 @@ export default function EditPropertyScreen() {
                   placeholderTextColor={colors.textSecondary}
                   keyboardType="numeric"
                   value={bathrooms}
-                  onChangeText={setBathrooms}
+                  onChangeText={(t) => setBathrooms(t.replace(/[^0-9]/g, ''))}
                 />
               </View>
             </View>

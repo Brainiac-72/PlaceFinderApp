@@ -4,7 +4,7 @@ import { Heart, Star } from 'lucide-react-native';
 import { useThemeColor } from '../hooks/useThemeColor';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
-import { Property } from '../utils/propertyUtils';
+import { Property, formatPricePeriod } from '../utils/propertyUtils';
 import { useSavedStore } from '../store/useSavedStore';
 
 const { width } = Dimensions.get('window');
@@ -63,7 +63,7 @@ const SpotlightCard = ({ property, onPress }: SpotlightCardProps) => {
           {property.title}
         </Text>
         <Text style={[styles.price, { color: colors.text }]}>
-          {property.currency}{property.price} <Text style={styles.perDay}>/ day</Text>
+          {property.currency}{property.price} <Text style={styles.perDay}>{formatPricePeriod(property.pricePeriod)}</Text>
         </Text>
       </View>
     </TouchableOpacity>

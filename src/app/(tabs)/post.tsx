@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, Alert, Platform, KeyboardAvoidingView, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, Alert, Platform, KeyboardAvoidingView, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColor } from '../../hooks/useThemeColor';
@@ -14,6 +15,11 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
 const PROPERTY_TYPES = ['Residential', 'Commercial', 'Office', 'Shop', 'Event'];
+const PRICE_PERIODS = [
+  { id: 'month', label: '/ Month' },
+  { id: 'year', label: '/ Year' },
+  { id: 'full', label: 'Full Price' }
+];
 
 /**
  * The Property Listing Creation Screen.
@@ -35,6 +41,7 @@ export default function PostPropertyScreen() {
   const [title, setTitle] = useState('');
   const [type, setType] = useState('Residential');
   const [price, setPrice] = useState('');
+  const [pricePeriod, setPricePeriod] = useState('month');
   const [location, setLocation] = useState('');
   const [bedrooms, setBedrooms] = useState('');
   const [bathrooms, setBathrooms] = useState('');
@@ -124,6 +131,7 @@ export default function PostPropertyScreen() {
       title: title.trim(),
       type,
       price: parseFloat(price),
+      price_period: pricePeriod,
       location: location.trim(),
       bedrooms: bedrooms ? parseInt(bedrooms) : null,
       bathrooms: bathrooms ? parseInt(bathrooms) : null,
@@ -150,6 +158,7 @@ export default function PostPropertyScreen() {
     // Reset forms
     setTitle('');
     setPrice('');
+    setPricePeriod('month');
     setLocation('');
     setBedrooms('');
     setBathrooms('');
@@ -190,7 +199,7 @@ export default function PostPropertyScreen() {
             activeOpacity={0.8}
           >
             {imageUri ? (
-              <Image source={{ uri: imageUri }} style={styles.previewImage} resizeMode="cover" />
+              <Image source={{ uri: imageBase64 ? `data:image/jpeg;base64,${imageBase64}` : imageUri }} style={styles.previewImage} contentFit="cover" />
             ) : (
               <>
                 <Ionicons name="images" size={36} color={colors.primary} />
@@ -248,7 +257,43 @@ export default function PostPropertyScreen() {
                   placeholderTextColor={colors.textSecondary}
                   keyboardType="numeric"
                   value={price}
-                  onChangeText={setPrice}
+                  onChangeText={(t) => setPrice(t.replace(/[^0-9.]/g, ''))}
+                />
+              </View>
+              <View style={[styles.inputGroup, { flex: 1 }]}>
+                <Text style={[styles.label, { color: colors.text }]}>Billing Period</Text>
+                <View style={[styles.input, { padding: 4, flexDirection: 'row', backgroundColor: colors.card, borderColor: isDark ? '#38383A' : '#E5E5EA' }]}>
+                  {PRICE_PERIODS.map(p => (
+                    <TouchableOpacity
+                      key={p.id}
+                      style={[
+                        { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 12 },
+                        pricePeriod === p.id && { backgroundColor: colors.primary }
+                      ]}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setPricePeriod(p.id);
+                      }}
+                    >
+                      <Text style={[
+                        { fontSize: 13, fontFamily: 'Outfit_600SemiBold', color: colors.textSecondary },
+                        pricePeriod === p.id && { color: '#FFF' }
+                      ]}>{p.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.inputRow}>
+              <View style={[styles.inputGroup, { flex: 1 }]}>
+                <Text style={[styles.label, { color: colors.text }]}>Location <Text style={{ color: colors.error }}>*</Text></Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: isDark ? '#38383A' : '#E5E5EA' }]}
+                  placeholder="e.g. East Legon, Accra"
+                  placeholderTextColor={colors.textSecondary}
+                  value={location}
+                  onChangeText={setLocation}
                 />
               </View>
               <View style={[styles.inputGroup, { flex: 1 }]}>
@@ -259,20 +304,9 @@ export default function PostPropertyScreen() {
                   placeholderTextColor={colors.textSecondary}
                   keyboardType="numeric"
                   value={areaSize}
-                  onChangeText={setAreaSize}
+                  onChangeText={(t) => setAreaSize(t.replace(/[^0-9.]/g, ''))}
                 />
               </View>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Location <Text style={{ color: colors.error }}>*</Text></Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: isDark ? '#38383A' : '#E5E5EA' }]}
-                placeholder="e.g. East Legon, Accra"
-                placeholderTextColor={colors.textSecondary}
-                value={location}
-                onChangeText={setLocation}
-              />
             </View>
 
             <View style={styles.inputRow}>
@@ -284,7 +318,7 @@ export default function PostPropertyScreen() {
                   placeholderTextColor={colors.textSecondary}
                   keyboardType="numeric"
                   value={bedrooms}
-                  onChangeText={setBedrooms}
+                  onChangeText={(t) => setBedrooms(t.replace(/[^0-9]/g, ''))}
                 />
               </View>
               <View style={[styles.inputGroup, { flex: 1 }]}>
@@ -295,7 +329,7 @@ export default function PostPropertyScreen() {
                   placeholderTextColor={colors.textSecondary}
                   keyboardType="numeric"
                   value={bathrooms}
-                  onChangeText={setBathrooms}
+                  onChangeText={(t) => setBathrooms(t.replace(/[^0-9]/g, ''))}
                 />
               </View>
             </View>

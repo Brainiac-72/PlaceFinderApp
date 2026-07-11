@@ -312,7 +312,9 @@ export default function PropertyDetailsScreen() {
       {/* Premium Floating Footer */}
       <View style={[styles.footer, { backgroundColor: colors.background === '#000000' || colors.background === '#0A0F1E' ? 'rgba(10,15,30,0.95)' : 'rgba(255,255,255,0.95)', paddingBottom: Math.max(insets.bottom, 24), borderTopColor: colors.border }]}>
         <View style={styles.footerPrice}>
-          <Text style={styles.footerLabel}>MONTHLY RENT</Text>
+          <Text style={styles.footerLabel}>
+            {property.pricePeriod === 'year' ? 'YEARLY RENT' : property.pricePeriod === 'full' ? 'FULL PRICE' : 'MONTHLY RENT'}
+          </Text>
           <Text style={styles.footerValue}>{property.currency}{property.price.toLocaleString()}</Text>
         </View>
         <Button 

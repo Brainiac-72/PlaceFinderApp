@@ -10,6 +10,7 @@ export interface Property {
   title: string;
   type: 'Residential' | 'Commercial' | 'Office' | 'Shop' | 'Event';
   price: number;
+  pricePeriod?: string;
   location: string;
   bedrooms?: number;
   bathrooms?: number;
@@ -37,6 +38,7 @@ export const mapSupabaseProperty = (p: any): Property => ({
   title: p.title || 'Untitled Space',
   type: p.type || 'Residential',
   price: Number(p.price) || 0,
+  pricePeriod: p.price_period || 'month',
   location: p.location || 'Unknown Location',
   bedrooms: p.bedrooms ? Number(p.bedrooms) : undefined,
   bathrooms: p.bathrooms ? Number(p.bathrooms) : undefined,
@@ -61,4 +63,13 @@ export const mapSupabaseProperty = (p: any): Property => ({
  */
 export const combineWithDummyData = (supabaseProperties: Property[]) => {
   return [...supabaseProperties, ...DUMMY_PROPERTIES];
+};
+
+/**
+ * Formats the price period for display
+ */
+export const formatPricePeriod = (period?: string) => {
+  if (period === 'year' || period === 'yearly') return '/ yr';
+  if (period === 'full' || period === 'full price') return '';
+  return '/ mo';
 };

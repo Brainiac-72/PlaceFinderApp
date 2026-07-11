@@ -1,7 +1,7 @@
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator, Text } from 'react-native';
+import { View, ActivityIndicator, Text, Dimensions } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider, useAuth } from '../providers/AuthProvider';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -189,7 +189,7 @@ export default function RootLayout() {
             <AuthProvider>
               <AlertProvider>
                 <RootLayoutNav />
-                <Toast config={toastConfig} />
+                <Toast config={toastConfig} position="top" topOffset={Dimensions.get("window").height / 2 - 50} />
                 <StatusBar style={isDark ? 'light' : 'dark'} />
               </AlertProvider>
             </AuthProvider>
