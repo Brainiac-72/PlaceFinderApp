@@ -10,6 +10,7 @@ export interface ChatSession {
   property?: any;
   landlord?: any;
   seeker?: any;
+  last_message?: ChatMessage;
 }
 
 export interface ChatMessage {
@@ -44,8 +45,47 @@ export const chatService = {
       console.error('Error fetching chats:', error);
       return [];
     }
+    
+    const chats = data || [];
+    
+    // Deduplicate chats so we only show one chat per unique person pair
+    const uniqueChatsMap = new Map<string, ChatSession>();
+    for (const chat of chats) {
+      const otherUserId = chat.seeker_id === userId ? chat.landlord_id : chat.seeker_id;
+      if (!uniqueChatsMap.has(otherUserId)) {
+         uniqueChatsMap.set(otherUserId, chat);
+      } else {
+         const existing = uniqueChatsMap.get(otherUserId)!;
+         if (new Date(chat.updated_at) > new Date(existing.updated_at)) {
+            uniqueChatsMap.set(otherUserId, chat);
+         }
+      }
+    }
+    
+    const uniqueChats = Array.from(uniqueChatsMap.values());
+    
+    // Fetch the last message for each chat
+    for (const chat of uniqueChats) {
+       const { data: msgs } = await supabase
+         .from('messages')
+         .select('*')
+         .eq('chat_id', chat.id)
+         .order('created_at', { ascending: false })
+         .limit(1);
+         
+       if (msgs && msgs.length > 0) {
+         const msg = msgs[0];
+         // Parse any attached property encoded in the content
+         const match = msg.content.match(/^\[ATTACHED_PROPERTY:([a-zA-Z0-9-]+)\]([\s\S]*)$/);
+         if (match) {
+           msg.attached_property_id = match[1];
+           msg.content = match[2];
+         }
+         chat.last_message = msg;
+       }
+    }
 
-    return data || [];
+    return uniqueChats.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   },
 
   async getOrCreateChat(propertyId: string, seekerId: string, landlordId: string): Promise<string | null> {
@@ -53,7 +93,6 @@ export const chatService = {
     const { data: existingChats, error: fetchError } = await supabase
       .from('chats')
       .select('id')
-      .eq('property_id', propertyId)
       .eq('seeker_id', seekerId)
       .eq('landlord_id', landlordId)
       .limit(1);
@@ -89,7 +128,7 @@ export const chatService = {
   async getMessages(chatId: string): Promise<ChatMessage[]> {
     const { data, error } = await supabase
       .from('messages')
-      .select('*, attached_property:properties(*)')
+      .select('*')
       .eq('chat_id', chatId)
       .order('created_at', { ascending: true });
 
@@ -98,28 +137,66 @@ export const chatService = {
       return [];
     }
 
-    return data || [];
+    const messages = data || [];
+    
+    // Manually parse attached_property_id from content
+    for (const msg of messages) {
+       if (msg.content) {
+         const match = msg.content.match(/^\[ATTACHED_PROPERTY:([a-zA-Z0-9-]+)\]([\s\S]*)$/);
+         if (match) {
+           msg.attached_property_id = match[1];
+           msg.content = match[2];
+         }
+       }
+    }
+    
+    // Fetch attached properties if any
+    const propertyIds = messages.map(m => m.attached_property_id).filter(Boolean);
+    if (propertyIds.length > 0) {
+       const { data: props } = await supabase.from('properties').select('*').in('id', propertyIds);
+       if (props) {
+         for (const msg of messages) {
+           if (msg.attached_property_id) {
+             msg.attached_property = props.find(p => p.id === msg.attached_property_id);
+           }
+         }
+       }
+    }
+    
+    return messages;
   },
 
   async sendMessage(chatId: string, senderId: string, content: string, attachedPropertyId?: string): Promise<ChatMessage | null> {
+    const finalContent = attachedPropertyId ? `[ATTACHED_PROPERTY:${attachedPropertyId}]${content}` : content;
     const insertData: any = {
       chat_id: chatId,
       sender_id: senderId,
-      content: content
+      content: finalContent
     };
-    if (attachedPropertyId) {
-      insertData.attached_property_id = attachedPropertyId;
+    
+    // Fallback: Check if receiver_id is needed by fetching chat details
+    const chatDetails = await this.getChatDetails(chatId);
+    if (chatDetails) {
+       insertData.receiver_id = chatDetails.seeker_id === senderId ? chatDetails.landlord_id : chatDetails.seeker_id;
     }
 
     const { data, error } = await supabase
       .from('messages')
       .insert(insertData)
-      .select('*, attached_property:properties(*)')
+      .select('*')
       .single();
 
     if (error) {
       console.error('Error sending message:', error);
       return null;
+    }
+    
+    if (data) {
+       const match = data.content.match(/^\[ATTACHED_PROPERTY:([a-zA-Z0-9-]+)\]([\s\S]*)$/);
+       if (match) {
+         data.attached_property_id = match[1];
+         data.content = match[2];
+       }
     }
 
     // Update the updated_at timestamp of the chat
@@ -148,5 +225,19 @@ export const chatService = {
           return null;
       }
       return data;
+  },
+  
+  async getUnreadMessagesCount(userId: string): Promise<number> {
+    const { count, error } = await supabase
+      .from('messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_read', false)
+      .neq('sender_id', userId);
+      
+    if (error) {
+      console.error('Error fetching unread count:', error);
+      return 0;
+    }
+    return count || 0;
   }
 };

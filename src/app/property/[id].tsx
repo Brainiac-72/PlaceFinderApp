@@ -66,6 +66,16 @@ export default function PropertyDetailsScreen() {
 
   const galleryImages = useMemo(() => {
     if (!property) return [];
+    
+    if (property.images && property.images.length > 0) {
+      // If we have only 1 real image, maybe append dummy images for layout?
+      // Actually, if we have multiple real images, just use them.
+      if (property.images.length > 1) {
+         return property.images.filter(Boolean);
+      }
+    }
+    
+    // Fallback if only 1 image or none
     return [
       property.imageUrl,
       'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2000&auto=format&fit=crop', // living room
@@ -99,7 +109,10 @@ export default function PropertyDetailsScreen() {
     try {
       bottomSheetModalRef.current?.dismiss();
       const chatId = await chatService.getOrCreateChat(property.id, user.id, property.landlord_id);
-      if (chatId) router.push(`/chat/${chatId}`);
+      if (chatId) {
+        // Pass the currently viewed property as context so the chat room knows what we're talking about
+        router.push(`/chat/${chatId}?refProperty=${property.id}` as any);
+      }
       else showAlert('Error', 'Could not start conversation.');
     } catch (e) {
       showAlert('Error', 'Failed to start chat.');
@@ -169,7 +182,7 @@ export default function PropertyDetailsScreen() {
             scrollEventThrottle={16}
             style={StyleSheet.absoluteFill}
           >
-            {galleryImages.map((img, idx) => (
+            {galleryImages.map((img: string, idx: number) => (
                <Image key={idx} source={{ uri: img }} style={{ width: HERO_WIDTH, height: 400 }} contentFit="cover" transition={400} />
             ))}
           </ScrollView>

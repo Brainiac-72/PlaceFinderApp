@@ -1,10 +1,12 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View, Text } from 'react-native';
 import { Home, Heart, CalendarDays, MessageCircle, User, PlusCircle } from 'lucide-react-native';
 import { useThemeColor } from '../../hooks/useThemeColor';
 import { useAuth } from '../../providers/AuthProvider';
+import { chatService } from '../../services/chatService';
+import { supabase } from '../../utils/supabase';
 
 /**
  * The bottom tab navigator layout for the main application screens.
@@ -14,6 +16,25 @@ export default function TabLayout() {
   const { colors, isDark } = useThemeColor();
   const { profile } = useAuth();
   const isLandlord = profile?.role === 'landlord';
+  
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    const fetchUnread = async () => {
+      const count = await chatService.getUnreadMessagesCount(profile.id);
+      setUnreadCount(count);
+    };
+    fetchUnread();
+    
+    const channel = supabase.channel('unread_msgs_layout')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, fetchUnread)
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id]);
   
   return (
     <Tabs 
@@ -88,7 +109,11 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconContainer, focused && { backgroundColor: isDark ? 'rgba(0, 168, 107, 0.2)' : '#E8F7F2' }]}>
               <MessageCircle size={24} color={color} strokeWidth={2} />
-              <View style={[styles.notificationDot, { borderColor: isDark ? '#111827' : '#FFFFFF' }]} />
+              {unreadCount > 0 && (
+                <View style={[styles.notificationBadge, { borderColor: isDark ? '#111827' : '#FFFFFF' }]}>
+                  <Text style={styles.notificationText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                </View>
+              )}
             </View>
           )
         }} 
@@ -116,15 +141,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  notificationDot: {
+  notificationBadge: {
     position: 'absolute',
-    top: 10,
-    right: 8,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#F97316',
+    top: 6,
+    right: 4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#EF4444',
     borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  notificationText: {
+    color: '#FFF',
+    fontSize: 9,
+    fontFamily: 'Outfit_700Bold',
   }
 });
 

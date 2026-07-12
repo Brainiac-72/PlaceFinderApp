@@ -52,8 +52,7 @@ export default function EditPropertyScreen() {
   const [areaSize, setAreaSize] = useState('');
   const [description, setDescription] = useState('');
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [images, setImages] = useState<{uri: string, base64: string | null}[]>([]);
 
   useEffect(() => {
     if (id) {
@@ -83,7 +82,20 @@ export default function EditPropertyScreen() {
         setAreaSize(data.area_size?.toString() || '');
         setDescription(data.description || '');
         setSelectedAmenities(data.amenities || []);
-        setImageUri(data.image_url);
+        let loadedImages: {uri: string, base64: string | null}[] = [];
+        if (data.image_url) {
+          try {
+            if (data.image_url.startsWith('[')) {
+              const urls = JSON.parse(data.image_url);
+              loadedImages = urls.map((url: string) => ({uri: url, base64: null}));
+            } else {
+              loadedImages = [{uri: data.image_url, base64: null}];
+            }
+          } catch {
+             loadedImages = [{uri: data.image_url, base64: null}];
+          }
+        }
+        setImages(loadedImages);
       }
     } catch (error: any) {
       Toast.show({ type: 'error', text1: 'Error Loading', text2: error.message });
@@ -96,14 +108,17 @@ export default function EditPropertyScreen() {
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      allowsEditing: true,
+      allowsMultipleSelection: true,
       quality: 0.3,
       base64: true,
     });
 
     if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
-      setImageBase64(result.assets[0].base64 || null);
+      const selectedImages = result.assets.map(asset => ({
+        uri: asset.uri,
+        base64: asset.base64 || null
+      }));
+      setImages([...images, ...selectedImages]);
     }
   };
 
@@ -137,12 +152,17 @@ export default function EditPropertyScreen() {
     }
 
     setSaving(true);
-    let finalImageUrl = imageUri;
+    let finalImageUrl = null;
 
-    // Only upload if a new image was picked (we have base64)
-    if (imageBase64) {
-      const uploadedUrl = await uploadImage(imageUri!, imageBase64);
-      if (uploadedUrl) finalImageUrl = uploadedUrl;
+    if (images.length > 0) {
+      const uploadPromises = images.map(img => 
+        img.base64 ? uploadImage(img.uri, img.base64) : Promise.resolve(img.uri)
+      );
+      const results = await Promise.all(uploadPromises);
+      const urls = results.filter(url => url !== null);
+      if (urls.length > 0) {
+         finalImageUrl = JSON.stringify(urls);
+      }
     }
 
     const updates = {
@@ -205,23 +225,31 @@ export default function EditPropertyScreen() {
             </View>
           </View>
 
-          <TouchableOpacity 
-            style={[
-              styles.imageUploadBtn, 
-              { backgroundColor: colors.card, borderColor: colors.border },
-              !imageUri && { borderStyle: 'dashed', borderWidth: 2 }
-            ]}
-            onPress={pickImage}
-          >
-            {imageUri ? (
-              <Image source={{ uri: imageBase64 ? `data:image/jpeg;base64,${imageBase64}` : imageUri }} style={styles.previewImage} contentFit="cover" />
-            ) : (
-              <>
-                <Ionicons name="images-outline" size={32} color={colors.primary} />
-                <Text style={[styles.imageUploadText, { color: colors.primary }]}>Tap to Change Photos</Text>
-              </>
-            )}
-          </TouchableOpacity>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 24 }}>
+            <TouchableOpacity 
+              style={[
+                styles.imageUploadBtn, 
+                { backgroundColor: colors.card, borderColor: colors.border },
+                { borderStyle: 'dashed', borderWidth: 2, width: 140, marginRight: 16 }
+              ]}
+              onPress={pickImage}
+            >
+              <Ionicons name="images-outline" size={32} color={colors.primary} />
+              <Text style={[styles.imageUploadText, { color: colors.primary, textAlign: 'center', paddingHorizontal: 10, marginTop: 8 }]}>Add Photos</Text>
+            </TouchableOpacity>
+
+            {images.map((img, idx) => (
+               <View key={idx} style={{ position: 'relative', marginRight: 16 }}>
+                 <Image source={{ uri: img.base64 ? `data:image/jpeg;base64,${img.base64}` : img.uri }} style={{ width: 140, height: 180, borderRadius: 16 }} contentFit="cover" />
+                 <TouchableOpacity 
+                   style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 12, padding: 4 }}
+                   onPress={() => setImages(images.filter((_, i) => i !== idx))}
+                 >
+                   <Ionicons name="close" size={16} color="#FFF" />
+                 </TouchableOpacity>
+               </View>
+            ))}
+          </ScrollView>
 
           <View style={[styles.formContainer, { backgroundColor: colors.card, shadowColor: isDark ? '#FFF' : '#000' }]}>
             
@@ -383,11 +411,6 @@ export default function EditPropertyScreen() {
                         }
                       }}
                     >
-                      <Ionicons 
-                        name={amenity.icon as any} 
-                        size={16} 
-                        color={isSelected ? '#fff' : colors.textSecondary} 
-                      />
                       <Text style={[
                         styles.amenityChipText,
                         { color: colors.textSecondary },

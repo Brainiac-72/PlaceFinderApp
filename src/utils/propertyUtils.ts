@@ -19,6 +19,7 @@ export interface Property {
   status: 'Available' | 'Taken' | 'Negotiations' | string; // Expanded for DB constraints
   currency: string;
   imageUrl: string;
+  images?: string[];
   landlord_id?: string;
   amenities?: string[];
   viewCount?: number;
@@ -33,26 +34,45 @@ export interface Property {
  * @param p - The raw database record fetched from Supabase.
  * @returns A strictly typed `Property` object.
  */
-export const mapSupabaseProperty = (p: any): Property => ({
-  id: p.id,
-  title: p.title || 'Untitled Space',
-  type: p.type || 'Residential',
-  price: Number(p.price) || 0,
-  pricePeriod: p.price_period || 'month',
-  location: p.location || 'Unknown Location',
-  bedrooms: p.bedrooms ? Number(p.bedrooms) : undefined,
-  bathrooms: p.bathrooms ? Number(p.bathrooms) : undefined,
-  areaSize: p.area_size ? Number(p.area_size) : undefined,
-  description: p.description,
-  status: p.status || 'Available',
-  currency: 'GHS',
-  imageUrl: p.image_url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1073&q=80',
-  landlord_id: p.landlord_id,
-  amenities: p.amenities || [],
-  viewCount: p.view_count || 0,
-  shareCount: p.share_count || 0,
-  landlord_phone: p.profiles?.phone_number || (Array.isArray(p.profiles) ? p.profiles[0]?.phone_number : null)
-});
+export const mapSupabaseProperty = (p: any): Property => {
+  let imagesArr: string[] = [];
+  let firstImage = p.image_url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1073&q=80';
+  
+  if (p.image_url && typeof p.image_url === 'string' && p.image_url.startsWith('[')) {
+    try {
+      imagesArr = JSON.parse(p.image_url);
+      if (imagesArr.length > 0) {
+        firstImage = imagesArr[0];
+      }
+    } catch {
+      imagesArr = [p.image_url];
+    }
+  } else if (p.image_url) {
+    imagesArr = [p.image_url];
+  }
+
+  return {
+    id: p.id,
+    title: p.title || 'Untitled Space',
+    type: p.type || 'Residential',
+    price: Number(p.price) || 0,
+    pricePeriod: p.price_period || 'month',
+    location: p.location || 'Unknown Location',
+    bedrooms: p.bedrooms ? Number(p.bedrooms) : undefined,
+    bathrooms: p.bathrooms ? Number(p.bathrooms) : undefined,
+    areaSize: p.area_size ? Number(p.area_size) : undefined,
+    description: p.description,
+    status: p.status || 'Available',
+    currency: 'GHS',
+    imageUrl: firstImage,
+    images: imagesArr,
+    landlord_id: p.landlord_id,
+    amenities: p.amenities || [],
+    viewCount: p.view_count || 0,
+    shareCount: p.share_count || 0,
+    landlord_phone: p.profiles?.phone_number || (Array.isArray(p.profiles) ? p.profiles[0]?.phone_number : null)
+  };
+};
 
 /**
  * Merges real properties fetched from the database with hardcoded dummy properties.

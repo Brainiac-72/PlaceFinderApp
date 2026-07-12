@@ -89,7 +89,26 @@ export default function InboxScreen() {
         renderItem={({ item, index }) => {
           const isLandlord = user?.id === item.landlord_id;
           const otherProfile = isLandlord ? item.seeker : item.landlord;
-          const propertyTitle = item.property?.title || 'Unknown Property';
+          const propertyTitle = item.property?.title || 'General Inquiry';
+          
+          let lastMsgContent = 'Tap to start conversation...';
+          let timeText = 'Just now';
+          let hasUnread = false; // We can base this on is_read if needed
+          
+          if (item.last_message) {
+            const d = new Date(item.last_message.created_at);
+            timeText = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            if (item.last_message.attached_property_id) {
+               lastMsgContent = item.last_message.content ? `📎 ${item.last_message.content}` : `📎 Shared a Property`;
+            } else {
+               lastMsgContent = item.last_message.content || 'Message sent';
+            }
+            
+            if (!item.last_message.is_read && item.last_message.sender_id !== user?.id) {
+               hasUnread = true;
+            }
+          }
 
           return (
             <Animated.View entering={FadeInDown.delay(index * 100).duration(400)} style={{ paddingHorizontal: 24, marginBottom: 12 }}>
@@ -100,16 +119,16 @@ export default function InboxScreen() {
                     <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1}>
                       {otherProfile?.full_name || 'Premium Client'}
                     </Text>
-                    <Text style={[styles.timeText, { color: colors.textMuted }]}>Just now</Text>
+                    <Text style={[styles.timeText, { color: colors.textMuted }]}>{timeText}</Text>
                   </View>
                   <Text style={styles.propertyRef} numberOfLines={1}>
                     RE: {propertyTitle.toUpperCase()}
                   </Text>
-                  <Text style={[styles.lastMessage, { color: colors.textSecondary }]} numberOfLines={1}>
-                    Tap to resume conversation...
+                  <Text style={[styles.lastMessage, { color: hasUnread ? colors.text : colors.textSecondary, fontFamily: hasUnread ? 'Outfit_700Bold' : 'Outfit_400Regular' }]} numberOfLines={1}>
+                    {lastMsgContent}
                   </Text>
                 </View>
-                <View style={styles.unreadDot} />
+                {hasUnread && <View style={styles.unreadDot} />}
               </Card>
             </Animated.View>
           );

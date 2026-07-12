@@ -48,22 +48,24 @@ export default function PostPropertyScreen() {
   const [areaSize, setAreaSize] = useState('');
   const [description, setDescription] = useState('');
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [images, setImages] = useState<{uri: string, base64: string | null}[]>([]);
   const [loading, setLoading] = useState(false);
 
   const pickImage = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      allowsEditing: true,
+      allowsMultipleSelection: true,
       quality: 0.3,
       base64: true,
     });
 
     if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
-      setImageBase64(result.assets[0].base64 || null);
+      const selectedImages = result.assets.map(asset => ({
+        uri: asset.uri,
+        base64: asset.base64 || null
+      }));
+      setImages([...images, ...selectedImages]);
     }
   };
 
@@ -117,13 +119,19 @@ export default function PostPropertyScreen() {
     setLoading(true);
     let publicImageUrl = null;
 
-    if (imageUri && imageBase64) {
-      publicImageUrl = await uploadImage(imageUri, imageBase64);
-      if (!publicImageUrl) {
-        Toast.show({ type: 'error', text1: 'Upload Failed', text2: 'There was an error uploading your image. Please try again.' });
+    if (images.length > 0) {
+      const uploadPromises = images.map(img => 
+        img.base64 ? uploadImage(img.uri, img.base64) : Promise.resolve(null)
+      );
+      const results = await Promise.all(uploadPromises);
+      const urls = results.filter(url => url !== null);
+      
+      if (urls.length === 0) {
+        Toast.show({ type: 'error', text1: 'Upload Failed', text2: 'There was an error uploading your images. Please try again.' });
         setLoading(false);
         return;
       }
+      publicImageUrl = JSON.stringify(urls);
     }
 
     const propertyData = {
@@ -165,8 +173,7 @@ export default function PostPropertyScreen() {
     setAreaSize('');
     setDescription('');
     setSelectedAmenities([]);
-    setImageUri(null);
-    setImageBase64(null);
+    setImages([]);
     
     if (data?.id) {
       router.push(`/property/${data.id}`);
@@ -189,24 +196,32 @@ export default function PostPropertyScreen() {
             <Text style={[styles.headerSub, { color: colors.textSecondary }]}>Add a new property to the market</Text>
           </View>
 
-          <TouchableOpacity 
-            style={[
-              styles.imageUploadBtn, 
-              { backgroundColor: isDark ? '#1C1C1E' : '#F2F2F7', borderColor: colors.border },
-              !imageUri && { borderStyle: 'dashed', borderWidth: 1.5 }
-            ]}
-            onPress={pickImage}
-            activeOpacity={0.8}
-          >
-            {imageUri ? (
-              <Image source={{ uri: imageBase64 ? `data:image/jpeg;base64,${imageBase64}` : imageUri }} style={styles.previewImage} contentFit="cover" />
-            ) : (
-              <>
-                <Ionicons name="images" size={36} color={colors.primary} />
-                <Text style={[styles.imageUploadText, { color: colors.text }]}>Tap to Upload Photos</Text>
-              </>
-            )}
-          </TouchableOpacity>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 32 }}>
+            <TouchableOpacity 
+              style={[
+                styles.imageUploadBtn, 
+                { backgroundColor: isDark ? '#1C1C1E' : '#F2F2F7', borderColor: colors.border },
+                { borderStyle: 'dashed', borderWidth: 1.5, width: 140, marginRight: 16 }
+              ]}
+              onPress={pickImage}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="images" size={36} color={colors.primary} />
+              <Text style={[styles.imageUploadText, { color: colors.text, textAlign: 'center', paddingHorizontal: 10, fontSize: 14, marginTop: 8 }]}>Add Photos</Text>
+            </TouchableOpacity>
+
+            {images.map((img, idx) => (
+               <View key={idx} style={{ position: 'relative', marginRight: 16 }}>
+                 <Image source={{ uri: img.base64 ? `data:image/jpeg;base64,${img.base64}` : img.uri }} style={{ width: 140, height: 180, borderRadius: 24 }} contentFit="cover" />
+                 <TouchableOpacity 
+                   style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 12, padding: 4 }}
+                   onPress={() => setImages(images.filter((_, i) => i !== idx))}
+                 >
+                   <Ionicons name="close" size={16} color="#FFF" />
+                 </TouchableOpacity>
+               </View>
+            ))}
+          </ScrollView>
 
           <View style={styles.formContainer}>
             
@@ -375,11 +390,6 @@ export default function PostPropertyScreen() {
                         }
                       }}
                     >
-                      <Ionicons 
-                        name={amenity.icon as any} 
-                        size={16} 
-                        color={isSelected ? '#fff' : colors.textSecondary} 
-                      />
                       <Text style={[
                         styles.amenityChipText,
                         { color: colors.textSecondary },

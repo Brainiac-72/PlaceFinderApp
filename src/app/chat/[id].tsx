@@ -55,7 +55,7 @@ const { width } = Dimensions.get("window");
  * and optimistic UI updates for instant feedback.
  */
 export default function ChatScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, refProperty } = useLocalSearchParams<{ id: string; refProperty?: string }>();
   const router = useRouter();
   const { user } = useAuth();
   const { colors, isDark } = useThemeColor();
@@ -78,14 +78,26 @@ export default function ChatScreen() {
     const loadChat = async () => {
       setLoading(true);
       const chatDetails = await chatService.getChatDetails(id);
-      setSession(chatDetails);
-      const msgs = await chatService.getMessages(id);
-      setMessages(msgs);
+      
       const allProps = await propertyService.getAllProperties();
-      if (chatDetails?.landlord_id)
+      if (chatDetails?.landlord_id) {
         setLandlordProperties(
           allProps.filter((p) => p.landlord_id === chatDetails.landlord_id),
         );
+      }
+      
+      // Update the contextual property if we navigated from a specific property page
+      if (chatDetails && refProperty) {
+         const matchedProp = allProps.find(p => p.id === refProperty);
+         if (matchedProp) {
+            chatDetails.property = matchedProp;
+         }
+      }
+      
+      setSession(chatDetails);
+      
+      const msgs = await chatService.getMessages(id);
+      setMessages(msgs);
       setLoading(false);
       setTimeout(
         () => flatListRef.current?.scrollToEnd({ animated: false }),
