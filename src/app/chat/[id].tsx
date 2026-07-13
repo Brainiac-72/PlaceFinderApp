@@ -103,6 +103,9 @@ export default function ChatScreen() {
         () => flatListRef.current?.scrollToEnd({ animated: false }),
         100,
       );
+      
+      // Mark initial messages as read
+      await chatService.markMessagesAsRead(id, user.id);
     };
 
     loadChat();
@@ -112,23 +115,34 @@ export default function ChatScreen() {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "messages",
           filter: `chat_id=eq.${id}`,
         },
         async (payload) => {
-          const newMessage = payload.new as ChatMessage;
-          if (newMessage.attached_property_id) {
-            const msgs = await chatService.getMessages(id);
-            setMessages(msgs);
-          } else {
-            setMessages((prev) => [...prev, newMessage]);
+          if (payload.eventType === 'INSERT') {
+            const newMessage = payload.new as ChatMessage;
+            
+            if (newMessage.sender_id !== user.id) {
+               await chatService.markMessagesAsRead(id, user.id);
+               newMessage.is_read = true;
+            }
+            
+            if (newMessage.attached_property_id) {
+              const msgs = await chatService.getMessages(id);
+              setMessages(msgs);
+            } else {
+              setMessages((prev) => [...prev, newMessage]);
+            }
+            setTimeout(
+              () => flatListRef.current?.scrollToEnd({ animated: true }),
+              100,
+            );
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedMsg = payload.new as ChatMessage;
+            setMessages((prev) => prev.map((m) => m.id === updatedMsg.id ? { ...m, is_read: updatedMsg.is_read } : m));
           }
-          setTimeout(
-            () => flatListRef.current?.scrollToEnd({ animated: true }),
-            100,
-          );
         },
       )
       .subscribe();
@@ -215,7 +229,13 @@ export default function ChatScreen() {
           style={[styles.header, { backgroundColor: isDark ? 'rgba(10,15,30,0.95)' : 'rgba(255,255,255,0.95)', paddingTop: insets.top + 10, borderBottomColor: colors.border }]}
         >
           <TouchableOpacity
-            onPress={() => router.back()}
+            onPress={() => {
+              if (refProperty) {
+                router.back();
+              } else {
+                router.push('/(tabs)/inbox');
+              }
+            }}
             style={styles.headerBtn}
           >
             <ChevronLeft size={24} color={colors.text} />
@@ -334,6 +354,17 @@ export default function ChatScreen() {
                       {item.content}
                     </Text>
                   ) : null}
+                  {isMe && (
+                    <View style={{ alignSelf: 'flex-end', marginTop: 4 }}>
+                      <Text style={{
+                        fontSize: 10,
+                        color: item.is_read ? '#A7F3D0' : 'rgba(255,255,255,0.7)',
+                        fontFamily: "Outfit_400Regular"
+                      }}>
+                        {item.is_read ? "Read" : "Delivered"}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </View>
             );

@@ -227,6 +227,19 @@ export const chatService = {
       return data;
   },
   
+  async markMessagesAsRead(chatId: string, userId: string): Promise<void> {
+    const { error } = await supabase
+      .from('messages')
+      .update({ is_read: true })
+      .eq('chat_id', chatId)
+      .neq('sender_id', userId)
+      .eq('is_read', false);
+      
+    if (error) {
+      console.error('Error marking messages as read:', error);
+    }
+  },
+
   async getUnreadMessagesCount(userId: string): Promise<number> {
     const { count, error } = await supabase
       .from('messages')
