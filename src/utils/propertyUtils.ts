@@ -51,6 +51,10 @@ export const mapSupabaseProperty = (p: any): Property => {
     imagesArr = [p.image_url];
   }
 
+  if (firstImage && firstImage.toLowerCase().endsWith('.heic')) {
+    firstImage = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80';
+  }
+
   return {
     id: p.id,
     title: p.title || 'Untitled Space',
@@ -63,7 +67,7 @@ export const mapSupabaseProperty = (p: any): Property => {
     areaSize: p.area_size ? Number(p.area_size) : undefined,
     description: p.description,
     status: p.status || 'Available',
-    currency: 'GHS',
+    currency: 'GH₵ ',
     imageUrl: firstImage,
     images: imagesArr,
     landlord_id: p.landlord_id,
