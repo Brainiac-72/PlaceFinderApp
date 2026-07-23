@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import Animated, { ZoomIn, ZoomOut } from "react-native-reanimated";
 import { useThemeColor } from "../hooks/useThemeColor";
+import { Ionicons } from "@expo/vector-icons";
 
 export type AlertButtonStyle = "default" | "cancel" | "destructive";
 
@@ -100,101 +101,77 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
                   styles.alertContainer,
                   {
                     backgroundColor: colors.card,
-                    shadowColor: isDark ? "#fff" : "#000",
+                    borderColor: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.05)",
+                    shadowColor: isDark ? "#006A4E" : "#000",
                   },
                 ]}
               >
-                <View style={styles.content}>
-                  <Text style={[styles.title, { color: colors.text }]}>
-                    {options?.title}
-                  </Text>
-                  {!!options?.message && (
-                    <Text
-                      style={[styles.message, { color: colors.textSecondary }]}
-                    >
-                      {options.message}
+                {/* Decorative Top Accent Bar using brand green */}
+                <View style={[styles.topAccentBar, { backgroundColor: colors.primary || '#006A4E' }]} />
+
+                <ScrollView bounces={false} showsVerticalScrollIndicator={false} style={{ maxHeight: 280 }}>
+                  {/* Decorative Icon Circle */}
+                  <View style={[styles.iconCircle, { backgroundColor: isDark ? "rgba(0, 106, 78, 0.15)" : "#E8F7F2" }]}>
+                    <Ionicons name="notifications" size={24} color={colors.primary || '#006A4E'} />
+                  </View>
+
+                  <View style={styles.content}>
+                    <Text style={[styles.title, { color: colors.text }]}>
+                      {options?.title}
                     </Text>
-                  )}
-                </View>
-
-                {(() => {
-                  const numButtons = options?.buttons?.length || 0;
-                  const isVertical = numButtons > 2;
-
-                  return (
-                    <ScrollView
-                      style={[
-                        isVertical && { maxHeight: 300 }, // Cap button list height if vertical
-                        {
-                          borderTopWidth: StyleSheet.hairlineWidth,
-                          borderTopColor: colors.border,
-                        },
-                      ]}
-                      bounces={false}
-                      showsVerticalScrollIndicator={true}
-                    >
-                      <View
-                        style={[
-                          styles.buttonsContainer,
-                          isVertical && { flexDirection: "column" },
-                        ]}
+                    {!!options?.message && (
+                      <Text
+                        style={[styles.message, { color: colors.textSecondary }]}
                       >
-                        {options?.buttons?.map((btn, index) => {
-                          const isLast = index === options.buttons!.length - 1;
-                          const isDestructive = btn.style === "destructive";
-                          const isCancel = btn.style === "cancel";
+                        {options.message}
+                      </Text>
+                    )}
+                  </View>
+                </ScrollView>
 
-                          return (
-                            <TouchableOpacity
-                              key={index}
-                              style={[
-                                styles.button,
-                                !isVertical &&
-                                  !isLast &&
-                                  styles.buttonBorderRight,
-                                !isVertical &&
-                                  !isLast && {
-                                    borderRightColor: colors.border,
-                                  },
-                                isVertical &&
-                                  !isLast &&
-                                  styles.buttonBorderBottom,
-                                isVertical &&
-                                  !isLast && {
-                                    borderBottomColor: colors.border,
-                                  },
-                                isVertical && { width: "100%", minHeight: 48 },
-                              ]}
-                              onPress={() => handleButtonPress(btn)}
-                              activeOpacity={0.7}
-                            >
-                              <Text
-                                style={[
-                                  styles.buttonText,
-                                  isCancel && {
-                                    color: colors.textSecondary,
-                                    fontWeight: "500",
-                                  },
-                                  isDestructive && {
-                                    color: colors.error,
-                                    fontWeight: "700",
-                                  },
-                                  !isCancel &&
-                                    !isDestructive && {
-                                      color: colors.primary,
-                                      fontWeight: "700",
-                                    },
-                                ]}
-                              >
-                                {btn.text}
-                              </Text>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    </ScrollView>
-                  );
-                })()}
+                {/* Modern Pill Buttons Footer */}
+                <View style={[
+                  styles.footerContainer,
+                  {
+                    flexDirection: options?.buttons?.length === 2 ? "row" : "column",
+                  }
+                ]}>
+                  {options?.buttons?.map((btn, index) => {
+                    const isDestructive = btn.style === "destructive";
+                    const isCancel = btn.style === "cancel";
+                    const isPrimary = !isCancel && !isDestructive;
+
+                    return (
+                      <TouchableOpacity
+                        key={index}
+                        style={[
+                          styles.pillButton,
+                          isPrimary && { backgroundColor: colors.primary || '#006A4E' },
+                          isDestructive && { backgroundColor: colors.error || '#EF4444' },
+                          isCancel && {
+                            backgroundColor: isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.03)",
+                            borderWidth: 1,
+                            borderColor: colors.border,
+                          },
+                          options.buttons!.length === 2 ? { flex: 1, marginHorizontal: 6 } : { width: "100%", marginBottom: 8 }
+                        ]}
+                        onPress={() => handleButtonPress(btn)}
+                        activeOpacity={0.8}
+                      >
+                        <Text
+                          style={[
+                            styles.pillButtonText,
+                            isPrimary && { color: "#FFF", fontFamily: "Outfit_700Bold" },
+                            isDestructive && { color: "#FFF", fontFamily: "Outfit_700Bold" },
+                            isCancel && { color: colors.textSecondary, fontFamily: "Outfit_600SemiBold" },
+                          ]}
+                        >
+                          {btn.text}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
               </Animated.View>
             )}
           </View>
@@ -221,58 +198,71 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.6)",
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
   },
   alertContainer: {
-    width: width * 0.85,
+    width: width * 0.88,
     maxWidth: 340,
-    maxHeight: "80%",
-    borderRadius: 20,
+    borderRadius: 24,
     overflow: "hidden",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.22,
+    shadowRadius: 16,
+    elevation: 12,
+    borderWidth: 1,
+  },
+  topAccentBar: {
+    height: 5,
+    width: "100%",
+  },
+  iconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 24,
+    alignSelf: "center",
   },
   content: {
-    padding: 24,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 20,
     alignItems: "center",
   },
   title: {
-    fontSize: 20,
-    fontWeight: "800",
+    fontSize: 18,
+    fontFamily: "Outfit_700Bold",
     textAlign: "center",
-    marginBottom: 8,
-    letterSpacing: -0.5,
+    marginBottom: 10,
+    lineHeight: 24,
+    letterSpacing: -0.2,
   },
   message: {
-    fontSize: 15,
+    fontSize: 14,
+    fontFamily: "Outfit_400Regular",
     textAlign: "center",
-    lineHeight: 22,
-    fontWeight: "400",
+    lineHeight: 20,
   },
-  buttonsContainer: {
+  footerContainer: {
+    paddingHorizontal: 18,
+    paddingBottom: 24,
     flexDirection: "row",
-    minHeight: 52,
-  },
-  button: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 10,
   },
-  buttonBorderRight: {
-    borderRightWidth: StyleSheet.hairlineWidth,
+  pillButton: {
+    height: 48,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 12,
   },
-  buttonBorderBottom: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  buttonText: {
-    fontSize: 16,
-    letterSpacing: 0.3,
+  pillButtonText: {
+    fontSize: 14,
+    letterSpacing: 0.1,
   },
 });

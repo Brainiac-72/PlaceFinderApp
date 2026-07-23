@@ -458,7 +458,7 @@ export default function ListingDetailPage() {
                     required
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm text-gray-900"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm text-gray-900 placeholder-gray-400 bg-white"
                   />
                 </div>
 
@@ -469,7 +469,7 @@ export default function ListingDetailPage() {
                     required
                     value={editPrice}
                     onChange={(e) => setEditPrice(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm text-gray-900"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm text-gray-900 placeholder-gray-400 bg-white"
                   />
                 </div>
 
@@ -493,7 +493,7 @@ export default function ListingDetailPage() {
                     required
                     value={editLocation}
                     onChange={(e) => setEditLocation(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm text-gray-900"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm text-gray-900 placeholder-gray-400 bg-white"
                   />
                 </div>
 
@@ -503,7 +503,7 @@ export default function ListingDetailPage() {
                     type="number"
                     value={editBedrooms}
                     onChange={(e) => setEditBedrooms(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm text-gray-900"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm text-gray-900 placeholder-gray-400 bg-white"
                   />
                 </div>
 
@@ -513,7 +513,7 @@ export default function ListingDetailPage() {
                     type="number"
                     value={editBathrooms}
                     onChange={(e) => setEditBathrooms(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm text-gray-900"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm text-gray-900 placeholder-gray-400 bg-white"
                   />
                 </div>
 
@@ -523,7 +523,7 @@ export default function ListingDetailPage() {
                     type="number"
                     value={editAreaSize}
                     onChange={(e) => setEditAreaSize(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm text-gray-900"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm text-gray-900 placeholder-gray-400 bg-white"
                   />
                 </div>
 
@@ -546,7 +546,7 @@ export default function ListingDetailPage() {
                     rows={4}
                     value={editDescription}
                     onChange={(e) => setEditDescription(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm text-gray-900 resize-none"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium text-sm text-gray-900 placeholder-gray-400 bg-white resize-none"
                   />
                 </div>
               </div>

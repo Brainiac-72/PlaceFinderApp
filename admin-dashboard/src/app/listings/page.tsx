@@ -102,6 +102,13 @@ export default function ListingsPage() {
             <Archive className="w-3.5 h-3.5" />
             Deleted Archive
           </button>
+          <button
+            onClick={() => router.push('/listings/new')}
+            className="ml-2 px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+          >
+            <MapPin className="w-3.5 h-3.5" />
+            New Property
+          </button>
         </div>
       </div>
 

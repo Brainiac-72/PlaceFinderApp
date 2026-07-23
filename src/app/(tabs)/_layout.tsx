@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import React, { useState, useEffect } from 'react';
 
 import { Platform, StyleSheet, View, Text } from 'react-native';
@@ -7,6 +7,9 @@ import { useThemeColor } from '../../hooks/useThemeColor';
 import { useAuth } from '../../providers/AuthProvider';
 import { chatService } from '../../services/chatService';
 import { supabase } from '../../utils/supabase';
+import Toast from 'react-native-toast-message';
+import { useCustomAlert } from '../../providers/AlertProvider';
+import { notificationService } from '../../services/notificationService';
 
 /**
  * The bottom tab navigator layout for the main application screens.
@@ -16,6 +19,8 @@ export default function TabLayout() {
   const { colors, isDark } = useThemeColor();
   const { profile } = useAuth();
   const isLandlord = profile?.role === 'landlord';
+  const router = useRouter();
+  const { showAlert } = useCustomAlert();
   
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -27,12 +32,97 @@ export default function TabLayout() {
     };
     fetchUnread();
     
+    // Fetch unread notifications on app load/reload to auto-pop the alert modal
+    const fetchUnreadNotifications = async () => {
+      try {
+        const notifications = await notificationService.getNotifications(profile.id);
+        const unread = notifications.filter(n => !n.is_read);
+        if (unread.length > 0) {
+          const latest = unread[0];
+          showAlert(
+            latest.title,
+            latest.body,
+            [
+              {
+                text: 'View All Alerts',
+                onPress: () => {
+                  router.push('/notifications');
+                  notificationService.markAsRead(latest.id);
+                }
+              },
+              {
+                text: 'Dismiss',
+                style: 'cancel',
+                onPress: () => {
+                  notificationService.markAsRead(latest.id);
+                }
+              }
+            ]
+          );
+        }
+      } catch (error) {
+        console.warn('Failed to load notifications on app mount:', error);
+      }
+    };
+    fetchUnreadNotifications();
+    
     const channel = supabase.channel('unread_msgs_layout')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, fetchUnread)
       .subscribe();
       
+    // Real-time subscription to notifications for in-app alert toasts and modals
+    const notificationsChannel = supabase.channel('realtime_notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${profile.id}`
+        },
+        (payload) => {
+          const newNotification = payload.new as any;
+          if (newNotification) {
+            // Trigger the custom interactive alert dialog in the center of the screen
+            showAlert(
+              newNotification.title,
+              newNotification.body,
+              [
+                {
+                  text: 'View All Alerts',
+                  onPress: () => {
+                    router.push('/notifications');
+                    notificationService.markAsRead(newNotification.id);
+                  }
+                },
+                {
+                  text: 'Dismiss',
+                  style: 'cancel',
+                  onPress: () => {
+                    notificationService.markAsRead(newNotification.id);
+                  }
+                }
+              ]
+            );
+
+            // Also show a brief banner toast at the top of the screen
+            Toast.show({
+              type: 'success',
+              text1: newNotification.title,
+              text2: newNotification.body,
+              onPress: () => {
+                router.push('/notifications');
+                Toast.hide();
+              }
+            });
+          }
+        }
+      )
+      .subscribe();
+      
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(notificationsChannel);
     };
   }, [profile?.id]);
   
